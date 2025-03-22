@@ -177,7 +177,7 @@ export const generateImprovedResume = async (resumeData: FormData, jobDescriptio
 
     // Create a detailed prompt for the AI to generate an improved resume
     const prompt = `
-You are an expert resume writer specializing in ATS-optimized resumes. Your task is to enhance the provided resume to better match the job description while maintaining all original experience and qualifications.
+You are an expert resume writer specializing in ATS-optimized resumes. Your task is to enhance the provided resume to better match the job description while maintaining all original experience and qualifications.  Prioritize using action verbs and quantifiable achievements.
 
 Resume to improve:
 ${resumeDataString}
@@ -187,19 +187,19 @@ ${jobDescription || "General professional resume for job applications"}
 
 Instructions:
 1. Keep ALL original experience, education, and skills from the resume
-2. Enhance descriptions to highlight relevance to the job
-3. Use ATS-friendly keywords from the job description
-4. Maintain chronological order and dates
-5. Add quantifiable achievements where possible
+2. Enhance descriptions to highlight relevance to the job description, using strong action verbs and quantifiable results wherever possible.
+3. Use ATS-friendly keywords from the job description.
+4. Maintain chronological order and dates.
+5. Add quantifiable achievements where possible, focusing on numbers and impact.
 6. Use the following markdown format:
    - # for name
    - ## for main sections
    - ### for subsections
    - - for bullet points
 
-Important: Do not remove or omit any information from the original resume. Only enhance and expand upon it.
+Important: Do not remove or omit any information from the original resume. Only enhance and expand upon it.  The output should be a polished, professional resume ready for submission.
 
-Format the resume with the person's name at the top (# Name), followed by contact details on one line. Then use section headers (## Section) for Education, Experience, Skills, etc. Use subsection headers (### Company/School) for each job or school. Add bullet points with - for achievements and responsibilities.
+Format the resume with the person's name at the top (# Name), followed by contact details on one line. Then use section headers (## Section) for Education, Experience, Skills, etc. Use subsection headers (### Company/School) for each job or school. Add bullet points with - for achievements and responsibilities.  Ensure a clear and concise writing style.
 
 Make sure not to leave anything blank - if there's missing information in the resume data, create appropriate professional content based on what's available. The output should be complete and ready for printing.
 
@@ -236,7 +236,7 @@ Return just the resume text in markdown format without any explanations or JSON.
 
     // Return the generated text or fall back to template
     let generatedText = data.generations[0].text.trim();
-    
+
     // Validate that the response contains the original content
     const requiredSections = ['education', 'experience', 'skills'];
     const hasRequiredContent = requiredSections.every(section => 
