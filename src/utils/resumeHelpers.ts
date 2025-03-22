@@ -6,6 +6,9 @@
 import { v4 as uuidv4 } from 'uuid';
 import { FormData, AtsAnalysisResult, FileFormat } from '../types';
 import mammoth from 'mammoth';
+import docx from 'docx';
+import { Document, Paragraph, TextRun, HeadingLevel, Table, TableRow, TableCell, WidthType } from 'docx';
+import { Packer } from 'docx';
 
 export const parseResumeFromFile = async (file: File): Promise<string> => {
   return new Promise((resolve, reject) => {
@@ -89,7 +92,7 @@ export const generateResumeFromJobDescription = (formData: FormData, jobDescript
 
   // Customize summary based on job description
   const keywords = jobDescription.toLowerCase().split(' ');
-  const relevantSkills = formData.skills.filter(skill => 
+  const relevantSkills = formData.skills.filter(skill =>
     keywords.some(keyword => skill.toLowerCase().includes(keyword))
   );
 
@@ -99,7 +102,7 @@ export const generateResumeFromJobDescription = (formData: FormData, jobDescript
   updatedFormData.experience = formData.experience.map(exp => ({
     ...exp,
     achievements: exp.achievements.filter(achievement =>
-      keywords.some(keyword => 
+      keywords.some(keyword =>
         achievement.toLowerCase().includes(keyword)
       )
     )
@@ -130,10 +133,10 @@ export const createEmptyFormData = (): FormData => ({
  */
 export const createHarvardResumeTemplate = (formData: FormData): string => {
   const { personalInfo, summary, experience, education, skills, certifications, languages, projects } = formData;
-  
+
   // Format full name
   const fullName = `${personalInfo.firstName} ${personalInfo.lastName}`.trim() || 'Your Name';
-  
+
   // Format contact line
   const contactParts = [];
   if (personalInfo.location) contactParts.push(personalInfo.location);
@@ -141,16 +144,16 @@ export const createHarvardResumeTemplate = (formData: FormData): string => {
   if (personalInfo.phone) contactParts.push(personalInfo.phone);
   if (personalInfo.linkedin) contactParts.push(personalInfo.linkedin);
   if (personalInfo.website) contactParts.push(personalInfo.website);
-  
+
   const contactLine = contactParts.length > 0 ? contactParts.join(' • ') : 'Location • Email • Phone';
-  
+
   // Build resume content
   let resumeContent = `# ${fullName}\n${contactLine}\n\n`;
-  
+
   if (summary) {
     resumeContent += `## Summary\n${summary}\n\n`;
   }
-  
+
   // Education section
   if (education && education.length > 0) {
     resumeContent += `## Education\n`;
@@ -160,11 +163,11 @@ export const createHarvardResumeTemplate = (formData: FormData): string => {
         const degreeInfo = [];
         if (edu.degree) degreeInfo.push(edu.degree);
         if (edu.fieldOfStudy) degreeInfo.push(`in ${edu.fieldOfStudy}`);
-        
+
         const dateRange = [];
         if (edu.startDate) dateRange.push(edu.startDate);
         if (edu.endDate) dateRange.push(edu.endDate);
-        
+
         if (degreeInfo.length > 0) {
           resumeContent += `${degreeInfo.join(' ')}`;
           if (dateRange.length > 0) {
@@ -172,10 +175,10 @@ export const createHarvardResumeTemplate = (formData: FormData): string => {
           }
           resumeContent += '\n';
         }
-        
+
         if (edu.location) resumeContent += `${edu.location}\n`;
         if (edu.gpa) resumeContent += `GPA: ${edu.gpa}\n`;
-        
+
         if (edu.achievements && edu.achievements.length > 0 && edu.achievements[0] !== '') {
           edu.achievements.forEach(achievement => {
             if (achievement) resumeContent += `- ${achievement}\n`;
@@ -185,7 +188,7 @@ export const createHarvardResumeTemplate = (formData: FormData): string => {
       }
     });
   }
-  
+
   // Experience section
   if (experience && experience.length > 0) {
     resumeContent += `## Experience\n`;
@@ -199,10 +202,10 @@ export const createHarvardResumeTemplate = (formData: FormData): string => {
           }
           resumeContent += '\n';
         }
-        
+
         if (exp.location) resumeContent += `${exp.location}\n`;
         if (exp.description) resumeContent += `${exp.description}\n`;
-        
+
         if (exp.achievements && exp.achievements.length > 0 && exp.achievements[0] !== '') {
           exp.achievements.forEach(achievement => {
             if (achievement) resumeContent += `- ${achievement}\n`;
@@ -212,12 +215,12 @@ export const createHarvardResumeTemplate = (formData: FormData): string => {
       }
     });
   }
-  
+
   // Skills section
   if (skills && skills.length > 0) {
     resumeContent += `## Skills\n${skills.join(', ')}\n\n`;
   }
-  
+
   // Certifications section
   if (certifications && certifications.length > 0) {
     resumeContent += `## Certifications\n`;
@@ -231,7 +234,7 @@ export const createHarvardResumeTemplate = (formData: FormData): string => {
     });
     resumeContent += '\n';
   }
-  
+
   // Languages section
   if (languages && languages.length > 0) {
     resumeContent += `## Languages\n`;
@@ -244,7 +247,7 @@ export const createHarvardResumeTemplate = (formData: FormData): string => {
     });
     resumeContent += '\n';
   }
-  
+
   // Projects section
   if (projects && projects.length > 0) {
     resumeContent += `## Projects\n`;
@@ -260,97 +263,100 @@ export const createHarvardResumeTemplate = (formData: FormData): string => {
       }
     });
   }
-  
+
   return resumeContent.trim();
 };
 
-/**
- * Exports resume to specified format (PDF/DOCX)
- * @param resumeData - The structured resume data
- * @param format - Output format (pdf/docx)
- * @param template - Optional template string to use instead of generating
- * @returns Promise resolving to URL for downloading
- */
-export const exportResume = async (
-  resumeData: FormData, 
-  format: FileFormat,
-  template: string
-): Promise<string> => {
-  // Use the template string if provided, otherwise generate from the form data
-  const resumeContent = template && template.trim() !== '' ? template : createHarvardResumeTemplate(resumeData);
-  
-  // Convert the markdown content to HTML
-  const htmlContent = `
-  <!DOCTYPE html>
-  <html>
-  <head>
-    <meta charset="utf-8">
-    <title>${resumeData.personalInfo.firstName} ${resumeData.personalInfo.lastName} Resume</title>
-    <style>
-      body {
-        font-family: Arial, sans-serif;
-        line-height: 1.6;
-        margin: 1in;
-        color: #333;
-      }
-      h1 {
-        font-size: 24pt;
-        margin-bottom: 4pt;
-        color: #000;
-      }
-      h2 {
-        font-size: 14pt;
-        margin-top: 12pt;
-        margin-bottom: 4pt;
-        border-bottom: 1pt solid #999;
-        color: #333;
-      }
-      h3 {
-        font-size: 12pt;
-        margin-top: 10pt;
-        margin-bottom: 2pt;
-        color: #444;
-      }
-      p {
-        margin: 2pt 0;
-      }
-      ul {
-        margin-top: 4pt;
-        margin-bottom: 8pt;
-      }
-      li {
-        margin-bottom: 2pt;
-      }
-      .contact-info {
-        margin-bottom: 12pt;
-        font-size: 10pt;
-      }
-    </style>
-  </head>
-  <body>
-    ${resumeContent
-      .replace(/^# (.+)$/gm, '<h1>$1</h1>')
-      .replace(/^## (.+)$/gm, '<h2>$1</h2>')
-      .replace(/^### (.+)$/gm, '<h3>$1</h3>')
-      .replace(/^- (.+)$/gm, '<li>$1</li>')
-      .replace(/\n\n/g, '</p><p>')
-      .replace(/<li>/g, '<ul><li>')
-      .replace(/<\/li>\n/g, '</li></ul>\n')
-      .replace(/<h1>(.+)<\/h1>\n(.+)/, '<h1>$1</h1><div class="contact-info">$2</div>')}
-  </body>
-  </html>
-  `;
-  
-  // For now, create a HTML blob with proper styling
-  return new Promise((resolve) => {
-    const blob = new Blob([htmlContent], { 
-      type: format === 'pdf' ? 'application/pdf' : 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' 
-    });
-    
-    // Return a URL to the blob
-    resolve(URL.createObjectURL(blob));
+export const createDocxDocument = (formData: FormData) => {
+  const doc = new Document({
+    sections: [{
+      properties: {},
+      children: [
+        new Paragraph({
+          text: `${formData.personalInfo.firstName} ${formData.personalInfo.lastName}`,
+          heading: HeadingLevel.HEADING_1,
+        }),
+        new Paragraph({
+          children: [
+            new TextRun(`${formData.personalInfo.email} | ${formData.personalInfo.phone} | ${formData.personalInfo.location}`),
+          ],
+        }),
+        new Paragraph({
+          text: "Professional Summary",
+          heading: HeadingLevel.HEADING_2,
+        }),
+        new Paragraph({
+          text: formData.summary,
+        }),
+        new Paragraph({
+          text: "Experience",
+          heading: HeadingLevel.HEADING_2,
+        }),
+        ...formData.experience.map(exp => [
+          new Paragraph({
+            children: [
+              new TextRun({
+                text: exp.title,
+                bold: true,
+              }),
+              new TextRun(" at "),
+              new TextRun({
+                text: exp.company,
+                bold: true,
+              }),
+            ],
+          }),
+          new Paragraph({
+            text: `${exp.startDate} - ${exp.endDate}`,
+            style: "italic",
+          }),
+          new Paragraph({
+            text: exp.description,
+          }),
+        ]).flat(),
+        new Paragraph({
+          text: "Education",
+          heading: HeadingLevel.HEADING_2,
+        }),
+        ...formData.education.map(edu => [
+          new Paragraph({
+            children: [
+              new TextRun({
+                text: edu.degree,
+                bold: true,
+              }),
+              new TextRun(" - "),
+              new TextRun({
+                text: edu.institution,
+                bold: true,
+              }),
+            ],
+          }),
+          new Paragraph({
+            text: `${edu.startDate} - ${edu.endDate}`,
+            style: "italic",
+          }),
+        ]).flat(),
+        new Paragraph({
+          text: "Skills",
+          heading: HeadingLevel.HEADING_2,
+        }),
+        new Paragraph({
+          text: formData.skills.join(", "),
+        }),
+      ],
+    }],
   });
+
+  return doc;
 };
+
+export const exportResume = async (formData: FormData): Promise<string> => {
+  const doc = createDocxDocument(formData);
+  const blob = await Packer.toBlob(doc);
+  return URL.createObjectURL(blob);
+};
+
 
 /**
  * Gets appropriate color for ATS score display
@@ -370,23 +376,23 @@ export const getScoreColor = (score: number): string => {
  */
 export const isFormDataComplete = (data: FormData): boolean => {
   const { personalInfo, experience, education, skills } = data;
-  
+
   if (!personalInfo.firstName || !personalInfo.lastName || !personalInfo.email || !personalInfo.phone) {
     return false;
   }
-  
+
   if (experience.length === 0 || !experience[0].company || !experience[0].title) {
     return false;
   }
-  
+
   if (education.length === 0 || !education[0].institution || !education[0].degree) {
     return false;
   }
-  
+
   if (skills.length === 0) {
     return false;
   }
-  
+
   return true;
 };
 

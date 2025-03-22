@@ -123,14 +123,14 @@ const ResumeUploader: React.FC<ResumeUploaderProps> = ({ onResumeExtracted }) =>
               </h3>
               
               <p className="text-sm text-muted-foreground mb-6 max-w-md text-center">
-                Supported formats: PDF, DOCX (Max 5MB)
+                Supported format: DOCX (Max 5MB)
               </p>
               
               <div className="flex flex-col sm:flex-row gap-4">
                 <div className="relative">
                   <input
                     type="file"
-                    accept=".pdf,.docx"
+                    accept=".docx"
                     onChange={handleFileChange}
                     className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                   />

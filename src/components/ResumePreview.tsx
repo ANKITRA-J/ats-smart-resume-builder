@@ -150,25 +150,14 @@ const ResumePreview: React.FC<ResumePreviewProps> = ({
                 </div>
                 
                 <div className="space-y-2">
-                  <h4 className="text-sm font-medium">File Format</h4>
-                  <div className="flex gap-2">
-                    <Button
-                      variant={fileFormat === 'pdf' ? 'default' : 'outline'}
-                      size="sm"
-                      onClick={() => setFileFormat('pdf')}
-                      className="flex-1"
-                    >
-                      PDF
-                    </Button>
-                    <Button
-                      variant={fileFormat === 'docx' ? 'default' : 'outline'}
-                      size="sm"
-                      onClick={() => setFileFormat('docx')}
-                      className="flex-1"
-                    >
-                      DOCX
-                    </Button>
-                  </div>
+                  <h4 className="text-sm font-medium">Download Format</h4>
+                  <Button
+                    variant="default"
+                    size="sm"
+                    className="w-full"
+                  >
+                    DOCX
+                  </Button>
                 </div>
                 
                 <Button 
