@@ -165,7 +165,7 @@ Return your analysis as a JSON object with the following structure:
  */
 export const generateImprovedResume = async (resumeData: FormData, jobDescription: string): Promise<string> => {
   try {
-    console.log("Generating improved resume with Cohere AI...");
+    console.log("Generating improved resume...");
 
     // Convert resume data to a string format for the AI
     const resumeDataString = JSON.stringify(resumeData, null, 2);
@@ -206,47 +206,65 @@ Make sure not to leave anything blank - if there's missing information in the re
 Return just the resume text in markdown format without any explanations or JSON.
 `;
 
-    // Send the request to Hugging Face Space API
-    const { client } = await import('@gradio/client');
-    const app = await client("https://vikhyatk-moondream1.hf.space/--replicas/x42l4/");
-    const result = await app.predict("/answer_question_1", [
-      null, // No image needed for text generation
-      prompt
-    ]);
-    
-    // Simulate response structure
-    const response = {
-      ok: true,
-      json: async () => ({ generations: [{ text: result.data }] })
-    };
+    // Try Hugging Face first for resume generation
+    try {
+      const { client } = await import('@gradio/client');
+      const app = await client("https://vikhyatk-moondream1.hf.space/--replicas/x42l4/");
+      const result = await app.predict("/answer_question_1", [
+        null, // No image needed for text generation
+        prompt
+      ]);
 
-    // Handle API errors
-    if (!response.ok) {
-      const errorData = await response.json();
-      console.error("Cohere API error:", errorData);
-      throw new Error(`Cohere API error: ${response.status}`);
+      // Simulate response structure
+      return result.data;
+    } catch (hfError) {
+      console.warn("Hugging Face API failed, falling back to Cohere:", hfError);
+
+      // Fallback to Cohere's API
+      const response = await fetch("https://api.cohere.ai/v1/generate", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${COHERE_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "command",
+          prompt: prompt,
+          max_tokens: 2000,
+          temperature: 0.4,
+          stop_sequences: [],
+          return_likelihoods: "NONE",
+        }),
+      });
+
+      // Handle API errors
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error("Cohere API error:", errorData);
+        throw new Error(`Cohere API error: ${response.status}`);
+      }
+
+      // Process the successful response
+      const data = await response.json();
+      console.log("Cohere response for improved resume:", data);
+
+      // Return the generated text or fall back to template
+      let generatedText = data.generations[0].text.trim();
+
+      // Validate that the response contains the original content
+      const requiredSections = ['education', 'experience', 'skills'];
+      const hasRequiredContent = requiredSections.every(section => 
+        generatedText.toLowerCase().includes(section) && 
+        resumeDataString.toLowerCase().includes(section)
+      );
+
+      if (!generatedText || generatedText.length < 500 || !hasRequiredContent) {
+        console.warn('AI response incomplete or missing required sections');
+        return createHarvardResumeTemplate(resumeData);
+      }
+
+      return generatedText;
     }
-
-    // Process the successful response
-    const data = await response.json();
-    console.log("Cohere response for improved resume:", data);
-
-    // Return the generated text or fall back to template
-    let generatedText = data.generations[0].text.trim();
-
-    // Validate that the response contains the original content
-    const requiredSections = ['education', 'experience', 'skills'];
-    const hasRequiredContent = requiredSections.every(section => 
-      generatedText.toLowerCase().includes(section) && 
-      resumeDataString.toLowerCase().includes(section)
-    );
-
-    if (!generatedText || generatedText.length < 500 || !hasRequiredContent) {
-      console.warn('AI response incomplete or missing required sections');
-      return createHarvardResumeTemplate(resumeData);
-    }
-
-    return generatedText;
   } catch (error) {
     console.error('Error generating improved resume:', error);
 
