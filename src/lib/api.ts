@@ -1,15 +1,23 @@
 
-// Real API integration with Cohere AI
+// Cohere AI API Integration
 import { AtsAnalysisResult, FormData } from '@/types';
 import { createHarvardResumeTemplate } from '@/utils/resumeHelpers';
 
+// API key for Cohere AI - used for AI-powered resume analysis
 const COHERE_API_KEY = "j7J7nPQUxOaCKHq7izOkPFjeUWlWi1tuOfVTM3IT";
 
+/**
+ * Analyzes a resume against a job description using Cohere AI.
+ * 
+ * @param resumeText - The text content of the resume
+ * @param jobDescription - The text content of the job description to match against
+ * @returns Promise resolving to an analysis result object
+ */
 export const analyzeResume = async (resumeText: string, jobDescription: string): Promise<AtsAnalysisResult> => {
   try {
-    console.log("Analyzing resume with Cohere API...");
+    console.log("Analyzing resume with Cohere AI...");
     
-    // First, we'll use Cohere to analyze the resume against the job description
+    // Create a detailed prompt for the AI to analyze the resume
     const prompt = `
 You are an expert ATS (Applicant Tracking System) analyzer and HR professional.
 
@@ -50,6 +58,7 @@ Return your analysis as a JSON object with the following structure:
 }
 `;
 
+    // Send the request to Cohere's API
     const response = await fetch("https://api.cohere.ai/v1/generate", {
       method: "POST",
       headers: {
@@ -57,21 +66,23 @@ Return your analysis as a JSON object with the following structure:
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "command",
-        prompt: prompt,
-        max_tokens: 1000,
-        temperature: 0.3,
-        stop_sequences: [],
-        return_likelihoods: "NONE",
+        model: "command",       // Using Cohere's command model
+        prompt: prompt,         // Our detailed analysis prompt
+        max_tokens: 1000,       // Maximum response length
+        temperature: 0.3,       // Lower temperature for more factual responses
+        stop_sequences: [],     // No early stopping
+        return_likelihoods: "NONE", // Don't need token likelihoods
       }),
     });
 
+    // Handle API errors
     if (!response.ok) {
       const errorData = await response.json();
       console.error("Cohere API error:", errorData);
       throw new Error(`Cohere API error: ${response.status}`);
     }
 
+    // Process the successful response
     const data = await response.json();
     console.log("Cohere response:", data);
     
@@ -120,11 +131,18 @@ Return your analysis as a JSON object with the following structure:
   }
 };
 
+/**
+ * Generates an improved resume using Cohere AI.
+ * 
+ * @param resumeData - Structured resume data from the form
+ * @param jobDescription - The job description to optimize the resume for
+ * @returns Promise resolving to the improved resume as a string
+ */
 export const generateImprovedResume = async (resumeData: FormData, jobDescription: string): Promise<string> => {
   try {
-    console.log("Generating improved resume with Cohere API...");
+    console.log("Generating improved resume with Cohere AI...");
     
-    // Create a simplified representation of the resume data
+    // Convert resume data to a string format for the AI
     const resumeDataString = JSON.stringify(resumeData, null, 2);
     
     // Check if we have valid data to work with
@@ -132,6 +150,7 @@ export const generateImprovedResume = async (resumeData: FormData, jobDescriptio
       return createHarvardResumeTemplate(resumeData);
     }
     
+    // Create a detailed prompt for the AI to generate an improved resume
     const prompt = `
 You are an expert resume writer specializing in ATS-optimized resumes using the Harvard format.
 
@@ -154,6 +173,7 @@ Make sure not to leave anything blank - if there's missing information in the re
 Return just the resume text in markdown format without any explanations or JSON.
 `;
 
+    // Send the request to Cohere's API
     const response = await fetch("https://api.cohere.ai/v1/generate", {
       method: "POST",
       headers: {
@@ -161,21 +181,23 @@ Return just the resume text in markdown format without any explanations or JSON.
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "command",
-        prompt: prompt,
-        max_tokens: 2000,
-        temperature: 0.4,
-        stop_sequences: [],
-        return_likelihoods: "NONE",
+        model: "command",       // Using Cohere's command model
+        prompt: prompt,         // Our detailed resume generation prompt
+        max_tokens: 2000,       // Longer response for full resume
+        temperature: 0.4,       // Balanced between creativity and factual
+        stop_sequences: [],     // No early stopping
+        return_likelihoods: "NONE", // Don't need token likelihoods
       }),
     });
 
+    // Handle API errors
     if (!response.ok) {
       const errorData = await response.json();
       console.error("Cohere API error:", errorData);
       throw new Error(`Cohere API error: ${response.status}`);
     }
 
+    // Process the successful response
     const data = await response.json();
     console.log("Cohere response for improved resume:", data);
     

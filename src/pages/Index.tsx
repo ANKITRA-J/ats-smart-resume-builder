@@ -73,11 +73,6 @@ const Index = () => {
       <Header activeTab={activeTab} setActiveTab={setActiveTab} />
       
       <main className="pt-24 pb-16">
-        <div className="container mx-auto mb-8 flex justify-center">
-          <div className="w-24 h-24">
-            <img src="/lovable-uploads/a9f48c99-3bed-4161-8976-0f4ce4dbafb7.png" alt="AI Resume Logo" className="w-full h-full" />
-          </div>
-        </div>
         {renderActiveTab()}
       </main>
       

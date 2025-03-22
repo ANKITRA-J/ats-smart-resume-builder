@@ -1,69 +1,62 @@
-# Welcome to your Lovable project
 
-## Project info
+# ATS Smart Resume Builder
 
-**URL**: https://lovable.dev/projects/0eb1d737-92c6-463d-909b-d201ed866205
+## Project Overview
 
-## How can I edit this code?
+This is a web application designed to create ATS-optimized resumes. It uses AI to analyze your resume against job descriptions and provides suggestions for improvement.
 
-There are several ways of editing your application.
+## Features
 
-**Use Lovable**
+- Upload and parse existing resumes
+- Create new resumes with a structured form
+- Analyze resume against job descriptions using AI
+- Generate improved resumes optimized for ATS systems
+- Export resumes in various formats
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/0eb1d737-92c6-463d-909b-d201ed866205) and start prompting.
+## Technologies Used
 
-Changes made via Lovable will be committed automatically to this repo.
+- React with TypeScript
+- Tailwind CSS for styling
+- shadcn/ui components
+- Cohere AI API for resume analysis
 
-**Use your preferred IDE**
+## Code Structure
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+- `src/components/`: UI components for the application
+- `src/pages/`: Page components like Index and NotFound
+- `src/lib/`: Utility functions and API integrations
+- `src/utils/`: Helper functions for resume processing
+- `src/types/`: TypeScript type definitions
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+## API Integration
 
-Follow these steps:
+The application uses Cohere AI for resume analysis. The AI analyzes the resume against job descriptions and provides feedback on:
+- Keyword matches and gaps
+- Structure recommendations
+- Formatting suggestions
+- Content improvements
+
+## Resume Templates
+
+Currently supports:
+- Harvard format template (standard professional format)
+
+## How to Run Locally
 
 ```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+# Install dependencies
+npm install
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+# Start the development server
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+## Building for Production
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+```sh
+# Build the application
+npm run build
 
-**Use GitHub Codespaces**
-
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with .
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/0eb1d737-92c6-463d-909b-d201ed866205) and click on Share -> Publish.
-
-## I want to use a custom domain - is that possible?
-
-We don't support custom domains (yet). If you want to deploy your project under your own domain then we recommend using Netlify. Visit our docs for more details: [Custom domains](https://docs.lovable.dev/tips-tricks/custom-domain/)
+# Preview the production build
+npm run preview
+```

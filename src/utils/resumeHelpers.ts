@@ -1,8 +1,17 @@
 
+/**
+ * Resume Processing Utilities
+ * This file contains helper functions for processing resume data
+ */
+
 import { v4 as uuidv4 } from 'uuid';
 import { FormData, AtsAnalysisResult, FileFormat } from '../types';
 
-// Parse resume from uploaded file
+/**
+ * Parses a resume from an uploaded file
+ * @param file - The uploaded file (PDF, DOCX, etc.)
+ * @returns Promise resolving to the extracted text content
+ */
 export const parseResumeFromFile = async (file: File): Promise<string> => {
   return new Promise((resolve, reject) => {
     // This is a placeholder for actual PDF/DOCX parsing
@@ -39,7 +48,11 @@ JavaScript, TypeScript, React, Node.js, Python, AWS
   });
 };
 
-// Extract structured data from resume text
+/**
+ * Extracts structured data from resume text
+ * @param text - Plain text content of the resume
+ * @returns Partial FormData object with extracted information
+ */
 export const extractDataFromText = (text: string): Partial<FormData> => {
   // This is a placeholder for actual text parsing
   // In production, this would use AI to extract structured data
@@ -91,7 +104,10 @@ export const extractDataFromText = (text: string): Partial<FormData> => {
   };
 };
 
-// Create empty form data
+/**
+ * Creates an empty form data structure
+ * @returns Empty FormData object with initial structure
+ */
 export const createEmptyFormData = (): FormData => {
   return {
     personalInfo: {
@@ -136,7 +152,11 @@ export const createEmptyFormData = (): FormData => {
   };
 };
 
-// Create Harvard resume template from FormData
+/**
+ * Creates a Harvard format resume from form data
+ * @param formData - The structured resume data
+ * @returns String with formatted resume content in Markdown
+ */
 export const createHarvardResumeTemplate = (formData: FormData): string => {
   const { personalInfo, summary, experience, education, skills, certifications, languages, projects } = formData;
   
@@ -273,7 +293,13 @@ export const createHarvardResumeTemplate = (formData: FormData): string => {
   return resumeContent.trim();
 };
 
-// Export resume to specified format
+/**
+ * Exports resume to specified format (PDF/DOCX)
+ * @param resumeData - The structured resume data
+ * @param format - Output format (pdf/docx)
+ * @param template - Optional template string to use instead of generating
+ * @returns Promise resolving to URL for downloading
+ */
 export const exportResume = async (
   resumeData: FormData, 
   format: FileFormat,
@@ -282,10 +308,71 @@ export const exportResume = async (
   // Use the template string if provided, otherwise generate from the form data
   const resumeContent = template && template.trim() !== '' ? template : createHarvardResumeTemplate(resumeData);
   
-  // For now, we're creating a text blob. In a real implementation, you'd use jsPDF/docx
+  // Convert the markdown content to HTML
+  const htmlContent = `
+  <!DOCTYPE html>
+  <html>
+  <head>
+    <meta charset="utf-8">
+    <title>${resumeData.personalInfo.firstName} ${resumeData.personalInfo.lastName} Resume</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        line-height: 1.6;
+        margin: 1in;
+        color: #333;
+      }
+      h1 {
+        font-size: 24pt;
+        margin-bottom: 4pt;
+        color: #000;
+      }
+      h2 {
+        font-size: 14pt;
+        margin-top: 12pt;
+        margin-bottom: 4pt;
+        border-bottom: 1pt solid #999;
+        color: #333;
+      }
+      h3 {
+        font-size: 12pt;
+        margin-top: 10pt;
+        margin-bottom: 2pt;
+        color: #444;
+      }
+      p {
+        margin: 2pt 0;
+      }
+      ul {
+        margin-top: 4pt;
+        margin-bottom: 8pt;
+      }
+      li {
+        margin-bottom: 2pt;
+      }
+      .contact-info {
+        margin-bottom: 12pt;
+        font-size: 10pt;
+      }
+    </style>
+  </head>
+  <body>
+    ${resumeContent
+      .replace(/^# (.+)$/gm, '<h1>$1</h1>')
+      .replace(/^## (.+)$/gm, '<h2>$1</h2>')
+      .replace(/^### (.+)$/gm, '<h3>$1</h3>')
+      .replace(/^- (.+)$/gm, '<li>$1</li>')
+      .replace(/\n\n/g, '</p><p>')
+      .replace(/<li>/g, '<ul><li>')
+      .replace(/<\/li>\n/g, '</li></ul>\n')
+      .replace(/<h1>(.+)<\/h1>\n(.+)/, '<h1>$1</h1><div class="contact-info">$2</div>')}
+  </body>
+  </html>
+  `;
+  
+  // For now, create a HTML blob with proper styling
   return new Promise((resolve) => {
-    // Create a blob with the resume content
-    const blob = new Blob([resumeContent], { 
+    const blob = new Blob([htmlContent], { 
       type: format === 'pdf' ? 'application/pdf' : 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' 
     });
     
@@ -294,14 +381,22 @@ export const exportResume = async (
   });
 };
 
-// Get ATS score color
+/**
+ * Gets appropriate color for ATS score display
+ * @param score - Numeric score (0-100)
+ * @returns CSS color class
+ */
 export const getScoreColor = (score: number): string => {
   if (score >= 80) return 'text-green-500';
   if (score >= 60) return 'text-yellow-500';
   return 'text-red-500';
 };
 
-// Check if form data is complete
+/**
+ * Checks if form data is complete enough to generate a resume
+ * @param data - The form data to check
+ * @returns Boolean indicating if minimum required fields are filled
+ */
 export const isFormDataComplete = (data: FormData): boolean => {
   const { personalInfo, experience, education, skills } = data;
   
@@ -324,7 +419,12 @@ export const isFormDataComplete = (data: FormData): boolean => {
   return true;
 };
 
-// Format date range for display
+/**
+ * Formats date range for display
+ * @param startDate - Start date string
+ * @param endDate - End date string (or 'Present')
+ * @returns Formatted date range string
+ */
 export const formatDateRange = (startDate: string, endDate: string | 'Present'): string => {
   return `${startDate} - ${endDate}`;
 };
