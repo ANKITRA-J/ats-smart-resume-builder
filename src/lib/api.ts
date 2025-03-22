@@ -1,4 +1,3 @@
-
 // Cohere AI API Integration
 import { AtsAnalysisResult, FormData } from '@/types';
 import { createHarvardResumeTemplate } from '@/utils/resumeHelpers';
@@ -16,7 +15,7 @@ const COHERE_API_KEY = "j7J7nPQUxOaCKHq7izOkPFjeUWlWi1tuOfVTM3IT";
 export const analyzeResume = async (resumeText: string, jobDescription: string): Promise<AtsAnalysisResult> => {
   try {
     console.log("Analyzing resume with Cohere AI...");
-    
+
     // Create a detailed prompt for the AI to analyze the resume
     const prompt = `
 You are an expert ATS (Applicant Tracking System) analyzer and HR professional.
@@ -85,10 +84,10 @@ Return your analysis as a JSON object with the following structure:
     // Process the successful response
     const data = await response.json();
     console.log("Cohere response:", data);
-    
+
     // Parse the generated text to extract the JSON analysis
     let analysisResult: AtsAnalysisResult;
-    
+
     try {
       // Try to find a JSON object in the response
       const jsonMatch = data.generations[0].text.match(/\{[\s\S]*\}/);
@@ -122,7 +121,7 @@ Return your analysis as a JSON object with the following structure:
         }
       };
     }
-    
+
     return analysisResult;
   } catch (error) {
     console.error('Error analyzing resume:', error);
@@ -141,15 +140,15 @@ Return your analysis as a JSON object with the following structure:
 export const generateImprovedResume = async (resumeData: FormData, jobDescription: string): Promise<string> => {
   try {
     console.log("Generating improved resume with Cohere AI...");
-    
+
     // Convert resume data to a string format for the AI
     const resumeDataString = JSON.stringify(resumeData, null, 2);
-    
+
     // Check if we have valid data to work with
     if (!resumeData.personalInfo.firstName && !resumeData.personalInfo.lastName) {
       return createHarvardResumeTemplate(resumeData);
     }
-    
+
     // Create a detailed prompt for the AI to generate an improved resume
     const prompt = `
 You are an expert resume writer specializing in ATS-optimized resumes using the Harvard format.
@@ -200,17 +199,17 @@ Return just the resume text in markdown format without any explanations or JSON.
     // Process the successful response
     const data = await response.json();
     console.log("Cohere response for improved resume:", data);
-    
+
     // Return the generated text or fall back to template
     const generatedText = data.generations[0].text.trim();
     if (!generatedText || generatedText.length < 100) {
       return createHarvardResumeTemplate(resumeData);
     }
-    
+
     return generatedText;
   } catch (error) {
     console.error('Error generating improved resume:', error);
-    
+
     // Fallback to using the template generator
     return createHarvardResumeTemplate(resumeData);
   }

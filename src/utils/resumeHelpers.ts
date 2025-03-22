@@ -351,10 +351,10 @@ export const createDocxDocument = (formData: FormData) => {
   return doc;
 };
 
-export const exportResume = async (formData: FormData): Promise<string> => {
+export const exportResume = async (formData: FormData): Promise<Blob> => {
   const doc = createDocxDocument(formData);
   const blob = await Packer.toBlob(doc);
-  return URL.createObjectURL(blob);
+  return blob;
 };
 
 

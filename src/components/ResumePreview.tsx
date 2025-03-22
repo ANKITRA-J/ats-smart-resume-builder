@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { 
@@ -38,12 +37,12 @@ const ResumePreview: React.FC<ResumePreviewProps> = ({
 
   const handleGenerateImprovedResume = async () => {
     setIsGenerating(true);
-    
+
     try {
       // First try to use the AI generated content
       const content = await generateImprovedResume(formData, jobDescription);
       setImprovedContent(content);
-      
+
       toast({
         title: "Resume Generated",
         description: "Your ATS-optimized resume has been created",
@@ -51,11 +50,11 @@ const ResumePreview: React.FC<ResumePreviewProps> = ({
       });
     } catch (error) {
       console.error('Error generating improved resume:', error);
-      
+
       // Fallback to using the template directly
       const fallbackContent = createHarvardResumeTemplate(formData);
       setImprovedContent(fallbackContent);
-      
+
       toast({
         title: "Using Template",
         description: "Generated resume using Harvard template",
@@ -68,27 +67,25 @@ const ResumePreview: React.FC<ResumePreviewProps> = ({
 
   const handleExportResume = async () => {
     setIsExporting(true);
-    
     try {
-      // Use the improved content as the template for export
-      const fileUrl = await exportResume(formData, fileFormat, improvedContent);
-      
-      // Create an anchor and trigger download
+      const blob = await exportResume(formData, 'docx', improvedContent); // Explicitly setting fileFormat to 'docx'
+      const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
-      a.href = fileUrl;
-      a.download = `${formData.personalInfo.firstName || 'Resume'}_${formData.personalInfo.lastName || 'Template'}.${fileFormat}`;
+      a.href = url;
+      a.download = `${formData.personalInfo.firstName || 'Resume'}_${formData.personalInfo.lastName || 'Template'}.docx`; //Corrected download filename
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
-      
+      URL.revokeObjectURL(url);
+
       toast({
         title: "Resume Downloaded",
-        description: `Your resume has been downloaded as ${fileFormat.toUpperCase()} file`,
+        description: `Your resume has been downloaded as DOCX file`,
         variant: "default",
       });
     } catch (error) {
       console.error('Error exporting resume:', error);
-      
+
       toast({
         title: "Download Failed",
         description: "There was an error downloading your resume. Please try again.",
@@ -124,7 +121,7 @@ const ResumePreview: React.FC<ResumePreviewProps> = ({
             Preview and download your ATS-optimized resume
           </p>
         </div>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="md:col-span-1 space-y-4">
             <Card>
@@ -148,7 +145,7 @@ const ResumePreview: React.FC<ResumePreviewProps> = ({
                     </Button>
                   </div>
                 </div>
-                
+
                 <div className="space-y-2">
                   <h4 className="text-sm font-medium">Download Format</h4>
                   <Button
@@ -159,7 +156,7 @@ const ResumePreview: React.FC<ResumePreviewProps> = ({
                     DOCX
                   </Button>
                 </div>
-                
+
                 <Button 
                   onClick={handleExportResume} 
                   disabled={isExporting || !improvedContent}
@@ -177,7 +174,7 @@ const ResumePreview: React.FC<ResumePreviewProps> = ({
                     </>
                   )}
                 </Button>
-                
+
                 <Button 
                   variant="outline" 
                   onClick={handleGenerateImprovedResume}
@@ -199,7 +196,7 @@ const ResumePreview: React.FC<ResumePreviewProps> = ({
               </CardContent>
             </Card>
           </div>
-          
+
           <div className="md:col-span-2">
             <Card className="h-full">
               <CardHeader className="pb-2">
