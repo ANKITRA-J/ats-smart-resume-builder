@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { 
   Card, 
@@ -70,12 +70,13 @@ const ResumePreview: React.FC<ResumePreviewProps> = ({
     setIsExporting(true);
     
     try {
-      const fileUrl = await exportResume(formData, fileFormat, template);
+      // Use the improved content as the template for export
+      const fileUrl = await exportResume(formData, fileFormat, improvedContent);
       
       // Create an anchor and trigger download
       const a = document.createElement('a');
       a.href = fileUrl;
-      a.download = `${formData.personalInfo.firstName || 'Resume'}_${formData.personalInfo.lastName || 'Template'}_ATS_Optimized.${fileFormat}`;
+      a.download = `${formData.personalInfo.firstName || 'Resume'}_${formData.personalInfo.lastName || 'Template'}.${fileFormat}`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -98,11 +99,21 @@ const ResumePreview: React.FC<ResumePreviewProps> = ({
     }
   };
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (formData && !improvedContent) {
       handleGenerateImprovedResume();
     }
   }, [formData]);
+
+  // Helper function to format markdown for display
+  const formatMarkdown = (text: string) => {
+    return text
+      .replace(/^# (.*$)/gm, '<h1 class="text-xl font-bold mb-2">$1</h1>')
+      .replace(/^## (.*$)/gm, '<h2 class="text-lg font-semibold mt-4 mb-2 text-primary">$1</h2>')
+      .replace(/^### (.*$)/gm, '<h3 class="text-md font-medium mt-3 mb-1">$1</h3>')
+      .replace(/^- (.*$)/gm, '<li class="ml-5 list-disc">$1</li>')
+      .replace(/\n/g, '<br>');
+  };
 
   return (
     <div className="w-full animate-fade-in">
@@ -162,7 +173,7 @@ const ResumePreview: React.FC<ResumePreviewProps> = ({
                 
                 <Button 
                   onClick={handleExportResume} 
-                  disabled={isExporting}
+                  disabled={isExporting || !improvedContent}
                   className="w-full"
                 >
                   {isExporting ? (
@@ -220,7 +231,10 @@ const ResumePreview: React.FC<ResumePreviewProps> = ({
                       </div>
                     </div>
                   ) : improvedContent ? (
-                    <div className="whitespace-pre-wrap" dangerouslySetInnerHTML={{ __html: improvedContent.replace(/\n/g, '<br>').replace(/^#+\s*(.*)/gm, '<h3>$1</h3>').replace(/^###\s*(.*)/gm, '<h4>$1</h4>').replace(/^\*\s*(.*)/gm, '<li>$1</li>').replace(/^-\s*(.*)/gm, '<li>$1</li>') }} />
+                    <div 
+                      className="whitespace-pre-wrap" 
+                      dangerouslySetInnerHTML={{ __html: formatMarkdown(improvedContent) }} 
+                    />
                   ) : (
                     <div className="flex items-center justify-center h-full text-muted-foreground">
                       <p>No content to preview</p>

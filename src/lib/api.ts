@@ -124,58 +124,34 @@ export const generateImprovedResume = async (resumeData: FormData, jobDescriptio
   try {
     console.log("Generating improved resume with Cohere API...");
     
-    // First attempt to use the local template generator
-    if (!jobDescription || jobDescription.trim() === '') {
-      return createHarvardResumeTemplate(resumeData);
-    }
-    
     // Create a simplified representation of the resume data
     const resumeDataString = JSON.stringify(resumeData, null, 2);
+    
+    // Check if we have valid data to work with
+    if (!resumeData.personalInfo.firstName && !resumeData.personalInfo.lastName) {
+      return createHarvardResumeTemplate(resumeData);
+    }
     
     const prompt = `
 You are an expert resume writer specializing in ATS-optimized resumes using the Harvard format.
 
-I'll provide you with resume data and a job description. Your task is to create an improved, ATS-friendly resume following the Harvard format shown below:
-
-# Full Name
-Location • Email • Phone • LinkedIn • Website
-
-## Education
-### Institution Name
-Degree in Field of Study | Start Year - End Year
-Location
-- Achievement 1
-- Achievement 2
-
-## Experience
-### Company Name
-Job Title | Start Year - End Year
-Location
-- Achievement with action verb
-- Achievement with quantifiable results
-
-## Skills
-Skill 1, Skill 2, Skill 3, Skill 4, Skill 5
-
-## Certifications
-- Certification Name | Issuer | Date
-
-## Languages
-- Language Name: Proficiency Level
-
-## Projects
-### Project Name
-Project description
-Technologies: Tech 1, Tech 2, Tech 3
-URL: Website link
+I'll provide you with resume data and a job description. Your task is to create an improved, ATS-friendly resume following the Harvard format with markdown formatting. Use the following markdown syntax:
+- # for the name at the top
+- ## for main section headers
+- ### for subsection headers
+- - for bullet points
 
 Resume Data:
 ${resumeDataString}
 
 Job Description:
-${jobDescription}
+${jobDescription || "General professional resume for job applications"}
 
-Please generate a professional, ATS-optimized resume following the Harvard format above. Begin with the person's name at the top, followed by contact information. Use section headers (##) and subsection headers (###). List items should use bullet points (-). Do not include explanatory text or placeholders. Do not mention that this is a template. Write it as if this is the final resume.
+Format the resume with the person's name at the top (# Name), followed by contact details on one line. Then use section headers (## Section) for Education, Experience, Skills, etc. Use subsection headers (### Company/School) for each job or school. Add bullet points with - for achievements and responsibilities.
+
+Make sure not to leave anything blank - if there's missing information in the resume data, create appropriate professional content based on what's available. The output should be complete and ready for printing.
+
+Return just the resume text in markdown format without any explanations or JSON.
 `;
 
     const response = await fetch("https://api.cohere.ai/v1/generate", {
