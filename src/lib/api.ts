@@ -1,6 +1,7 @@
 
 // Real API integration with Cohere AI
-import { AtsAnalysisResult } from '@/types';
+import { AtsAnalysisResult, FormData } from '@/types';
+import { createHarvardResumeTemplate } from '@/utils/resumeHelpers';
 
 const COHERE_API_KEY = "j7J7nPQUxOaCKHq7izOkPFjeUWlWi1tuOfVTM3IT";
 
@@ -119,17 +120,54 @@ Return your analysis as a JSON object with the following structure:
   }
 };
 
-export const generateImprovedResume = async (resumeData: any, jobDescription: string): Promise<string> => {
+export const generateImprovedResume = async (resumeData: FormData, jobDescription: string): Promise<string> => {
   try {
     console.log("Generating improved resume with Cohere API...");
+    
+    // First attempt to use the local template generator
+    if (!jobDescription || jobDescription.trim() === '') {
+      return createHarvardResumeTemplate(resumeData);
+    }
     
     // Create a simplified representation of the resume data
     const resumeDataString = JSON.stringify(resumeData, null, 2);
     
     const prompt = `
-You are an expert resume writer specializing in ATS-optimized resumes.
+You are an expert resume writer specializing in ATS-optimized resumes using the Harvard format.
 
-I'll provide you with resume data and a job description. Your task is to create an improved, ATS-friendly resume in Harvard format (markdown).
+I'll provide you with resume data and a job description. Your task is to create an improved, ATS-friendly resume following the Harvard format shown below:
+
+# Full Name
+Location • Email • Phone • LinkedIn • Website
+
+## Education
+### Institution Name
+Degree in Field of Study | Start Year - End Year
+Location
+- Achievement 1
+- Achievement 2
+
+## Experience
+### Company Name
+Job Title | Start Year - End Year
+Location
+- Achievement with action verb
+- Achievement with quantifiable results
+
+## Skills
+Skill 1, Skill 2, Skill 3, Skill 4, Skill 5
+
+## Certifications
+- Certification Name | Issuer | Date
+
+## Languages
+- Language Name: Proficiency Level
+
+## Projects
+### Project Name
+Project description
+Technologies: Tech 1, Tech 2, Tech 3
+URL: Website link
 
 Resume Data:
 ${resumeDataString}
@@ -137,13 +175,7 @@ ${resumeDataString}
 Job Description:
 ${jobDescription}
 
-Please generate a professional, ATS-optimized resume in markdown format. Ensure it:
-1. Uses keywords from the job description
-2. Follows Harvard formatting style (clean, professional)
-3. Emphasizes relevant skills and experiences
-4. Includes quantifiable achievements
-5. Has consistent formatting
-6. Is concise yet comprehensive
+Please generate a professional, ATS-optimized resume following the Harvard format above. Begin with the person's name at the top, followed by contact information. Use section headers (##) and subsection headers (###). List items should use bullet points (-). Do not include explanatory text or placeholders. Do not mention that this is a template. Write it as if this is the final resume.
 `;
 
     const response = await fetch("https://api.cohere.ai/v1/generate", {
@@ -171,59 +203,17 @@ Please generate a professional, ATS-optimized resume in markdown format. Ensure 
     const data = await response.json();
     console.log("Cohere response for improved resume:", data);
     
-    return data.generations[0].text.trim();
+    // Return the generated text or fall back to template
+    const generatedText = data.generations[0].text.trim();
+    if (!generatedText || generatedText.length < 100) {
+      return createHarvardResumeTemplate(resumeData);
+    }
+    
+    return generatedText;
   } catch (error) {
     console.error('Error generating improved resume:', error);
     
-    // Fallback to existing template generator
-    let template = `# ${resumeData.personalInfo.firstName} ${resumeData.personalInfo.lastName}
-
-${resumeData.personalInfo.email} | ${resumeData.personalInfo.phone} | ${resumeData.personalInfo.location}
-${resumeData.personalInfo.linkedin ? resumeData.personalInfo.linkedin : ''} ${resumeData.personalInfo.website ? `| ${resumeData.personalInfo.website}` : ''}
-
-## Summary
-${resumeData.summary || 'Experienced professional with a strong background in technology and a track record of delivering impactful solutions.'}
-
-## Experience
-${resumeData.experience.map((exp: any) => `
-### ${exp.title} | ${exp.company} | ${exp.startDate} - ${exp.endDate}
-${exp.location ? `${exp.location}` : ''}
-${exp.description}
-
-${exp.achievements.map((achievement: string) => `- ${achievement}`).join('\n')}
-`).join('\n')}
-
-## Education
-${resumeData.education.map((edu: any) => `
-### ${edu.degree} in ${edu.fieldOfStudy} | ${edu.institution} | ${edu.startDate} - ${edu.endDate}
-${edu.location ? `${edu.location}` : ''}
-${edu.gpa ? `GPA: ${edu.gpa}` : ''}
-${edu.achievements ? edu.achievements.map((achievement: string) => `- ${achievement}`).join('\n') : ''}
-`).join('\n')}
-
-## Skills
-${resumeData.skills.join(', ')}
-
-${resumeData.certifications && resumeData.certifications.length > 0 ? `
-## Certifications
-${resumeData.certifications.map((cert: any) => `- ${cert.name} | ${cert.issuer} | ${cert.date}`).join('\n')}
-` : ''}
-
-${resumeData.languages && resumeData.languages.length > 0 ? `
-## Languages
-${resumeData.languages.map((lang: any) => `- ${lang.name}: ${lang.proficiency}`).join('\n')}
-` : ''}
-
-${resumeData.projects && resumeData.projects.length > 0 ? `
-## Projects
-${resumeData.projects.map((proj: any) => `
-### ${proj.name}
-${proj.description}
-Technologies: ${proj.technologies.join(', ')}
-${proj.url ? `URL: ${proj.url}` : ''}
-`).join('\n')}
-` : ''}`;
-
-    return template;
+    // Fallback to using the template generator
+    return createHarvardResumeTemplate(resumeData);
   }
 };

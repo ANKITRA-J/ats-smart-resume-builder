@@ -8,20 +8,15 @@ import {
   CardTitle 
 } from '@/components/ui/card';
 import { 
-  Tabs, 
-  TabsContent, 
-  TabsList, 
-  TabsTrigger 
-} from '@/components/ui/tabs';
-import { 
   Download, 
   FileText, 
   CheckCircle2,
   FileOutput
 } from 'lucide-react';
 import { FormData, FileFormat } from '@/types';
-import { exportResume } from '@/utils/resumeHelpers';
+import { exportResume, createHarvardResumeTemplate } from '@/utils/resumeHelpers';
 import { generateImprovedResume } from '@/lib/api';
+import { useToast } from "@/hooks/use-toast";
 
 interface ResumePreviewProps {
   formData: FormData;
@@ -39,15 +34,33 @@ const ResumePreview: React.FC<ResumePreviewProps> = ({
   const [isGenerating, setIsGenerating] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [improvedContent, setImprovedContent] = useState<string>('');
+  const { toast } = useToast();
 
   const handleGenerateImprovedResume = async () => {
     setIsGenerating(true);
     
     try {
+      // First try to use the AI generated content
       const content = await generateImprovedResume(formData, jobDescription);
       setImprovedContent(content);
+      
+      toast({
+        title: "Resume Generated",
+        description: "Your ATS-optimized resume has been created",
+        variant: "default",
+      });
     } catch (error) {
       console.error('Error generating improved resume:', error);
+      
+      // Fallback to using the template directly
+      const fallbackContent = createHarvardResumeTemplate(formData);
+      setImprovedContent(fallbackContent);
+      
+      toast({
+        title: "Using Template",
+        description: "Generated resume using Harvard template",
+        variant: "default",
+      });
     } finally {
       setIsGenerating(false);
     }
@@ -62,12 +75,24 @@ const ResumePreview: React.FC<ResumePreviewProps> = ({
       // Create an anchor and trigger download
       const a = document.createElement('a');
       a.href = fileUrl;
-      a.download = `${formData.personalInfo.firstName}_${formData.personalInfo.lastName}_Resume.${fileFormat}`;
+      a.download = `${formData.personalInfo.firstName || 'Resume'}_${formData.personalInfo.lastName || 'Template'}_ATS_Optimized.${fileFormat}`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
+      
+      toast({
+        title: "Resume Downloaded",
+        description: `Your resume has been downloaded as ${fileFormat.toUpperCase()} file`,
+        variant: "default",
+      });
     } catch (error) {
       console.error('Error exporting resume:', error);
+      
+      toast({
+        title: "Download Failed",
+        description: "There was an error downloading your resume. Please try again.",
+        variant: "destructive",
+      });
     } finally {
       setIsExporting(false);
     }

@@ -136,19 +136,118 @@ export const createEmptyFormData = (): FormData => {
   };
 };
 
+// Create Harvard resume template from FormData
+export const createHarvardResumeTemplate = (formData: FormData): string => {
+  const { personalInfo, summary, experience, education, skills, certifications, languages, projects } = formData;
+  
+  // Format full name
+  const fullName = `${personalInfo.firstName} ${personalInfo.lastName}`.trim();
+  
+  // Format contact line
+  const contactParts = [];
+  if (personalInfo.location) contactParts.push(personalInfo.location);
+  if (personalInfo.email) contactParts.push(personalInfo.email);
+  if (personalInfo.phone) contactParts.push(personalInfo.phone);
+  if (personalInfo.linkedin) contactParts.push(personalInfo.linkedin);
+  if (personalInfo.website) contactParts.push(personalInfo.website);
+  
+  const contactLine = contactParts.join(' • ');
+  
+  // Build resume content
+  let resumeContent = `
+${fullName}
+${contactLine}
+
+${summary ? `## Summary\n${summary}\n\n` : ''}`;
+
+  // Education section
+  if (education.length > 0) {
+    resumeContent += `## Education\n`;
+    education.forEach(edu => {
+      resumeContent += `### ${edu.institution}\n`;
+      resumeContent += `${edu.degree}${edu.fieldOfStudy ? ` in ${edu.fieldOfStudy}` : ''} | ${edu.startDate} - ${edu.endDate}\n`;
+      if (edu.location) resumeContent += `${edu.location}\n`;
+      if (edu.gpa) resumeContent += `GPA: ${edu.gpa}\n`;
+      if (edu.achievements && edu.achievements.length > 0) {
+        resumeContent += `${edu.achievements.map(achievement => `- ${achievement}`).join('\n')}\n`;
+      }
+      resumeContent += '\n';
+    });
+  }
+
+  // Experience section
+  if (experience.length > 0) {
+    resumeContent += `## Experience\n`;
+    experience.forEach(exp => {
+      resumeContent += `### ${exp.company}\n`;
+      resumeContent += `${exp.title} | ${exp.startDate} - ${exp.endDate}\n`;
+      if (exp.location) resumeContent += `${exp.location}\n`;
+      if (exp.description) resumeContent += `${exp.description}\n`;
+      if (exp.achievements && exp.achievements.length > 0) {
+        resumeContent += `${exp.achievements.map(achievement => `- ${achievement}`).join('\n')}\n`;
+      }
+      resumeContent += '\n';
+    });
+  }
+
+  // Skills section
+  if (skills.length > 0) {
+    resumeContent += `## Skills\n${skills.join(', ')}\n\n`;
+  }
+
+  // Certifications section
+  if (certifications && certifications.length > 0) {
+    resumeContent += `## Certifications\n`;
+    certifications.forEach(cert => {
+      resumeContent += `- ${cert.name}${cert.issuer ? ` | ${cert.issuer}` : ''}${cert.date ? ` | ${cert.date}` : ''}\n`;
+    });
+    resumeContent += '\n';
+  }
+
+  // Languages section
+  if (languages && languages.length > 0) {
+    resumeContent += `## Languages\n`;
+    languages.forEach(lang => {
+      resumeContent += `- ${lang.name}: ${lang.proficiency}\n`;
+    });
+    resumeContent += '\n';
+  }
+
+  // Projects section
+  if (projects && projects.length > 0) {
+    resumeContent += `## Projects\n`;
+    projects.forEach(proj => {
+      resumeContent += `### ${proj.name}\n`;
+      if (proj.description) resumeContent += `${proj.description}\n`;
+      if (proj.technologies && proj.technologies.length > 0) {
+        resumeContent += `Technologies: ${proj.technologies.join(', ')}\n`;
+      }
+      if (proj.url) resumeContent += `URL: ${proj.url}\n`;
+      resumeContent += '\n';
+    });
+  }
+
+  return resumeContent.trim();
+};
+
 // Export resume to specified format
 export const exportResume = async (
   resumeData: FormData, 
   format: FileFormat,
   template: string
 ): Promise<string> => {
-  // This is a placeholder for actual PDF/DOCX generation
-  // In production, you would use jsPDF for PDF and docx for DOCX
+  // In a real implementation, this would use jsPDF for PDF and docx for DOCX
+  // For now, we'll create a text blob with the resume content
+  const resumeContent = createHarvardResumeTemplate(resumeData);
   
   return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve(URL.createObjectURL(new Blob(['Mocked resume file content'], { type: format === 'pdf' ? 'application/pdf' : 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' })));
-    }, 1000);
+    // Create a blob with the resume content
+    const blob = new Blob([resumeContent], { 
+      type: format === 'pdf' ? 'application/pdf' : 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' 
+    });
+    
+    // Return a URL to the blob
+    resolve(URL.createObjectURL(blob));
   });
 };
 

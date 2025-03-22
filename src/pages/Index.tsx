@@ -7,6 +7,7 @@ import AtsAnalysis from '@/components/AtsAnalysis';
 import ResumePreview from '@/components/ResumePreview';
 import { FormData } from '@/types';
 import { createEmptyFormData, extractDataFromText } from '@/utils/resumeHelpers';
+import { Github, Heart } from 'lucide-react';
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState<'upload' | 'create' | 'analyze' | 'preview'>('upload');
@@ -75,9 +76,20 @@ const Index = () => {
         {renderActiveTab()}
       </main>
       
-      <footer className="bg-muted/40 backdrop-blur-sm border-t py-4 text-center text-sm text-muted-foreground">
-        <div className="container mx-auto">
-          Resume Architect — Build ATS-optimized resumes with ease
+      <footer className="bg-muted/40 backdrop-blur-sm border-t py-4 text-center text-sm text-muted-foreground fixed bottom-0 w-full">
+        <div className="container mx-auto flex items-center justify-center space-x-2">
+          <span>Made with</span>
+          <Heart className="h-4 w-4 text-red-500 animate-pulse" />
+          <span>by Lakshay</span>
+          <a 
+            href="https://github.com/isthatlak" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="inline-flex items-center ml-2 hover:text-primary transition-colors"
+          >
+            <Github className="h-4 w-4 mr-1" />
+            <span>GitHub</span>
+          </a>
         </div>
       </footer>
     </div>
