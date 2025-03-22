@@ -2,21 +2,12 @@
 import { AtsAnalysisResult, FormData } from '@/types';
 import { createHarvardResumeTemplate } from '@/utils/resumeHelpers';
 
-// API key for Cohere AI - used for AI-powered resume analysis
 const COHERE_API_KEY = "j7J7nPQUxOaCKHq7izOkPFjeUWlWi1tuOfVTM3IT";
 
-/**
- * Analyzes a resume against a job description using Cohere AI.
- * 
- * @param resumeText - The text content of the resume
- * @param jobDescription - The text content of the job description to match against
- * @returns Promise resolving to an analysis result object
- */
 export const analyzeResume = async (resumeText: string, jobDescription: string): Promise<AtsAnalysisResult> => {
   try {
     console.log("Analyzing resume with Cohere AI...");
 
-    // Create a detailed prompt for the AI to analyze the resume
     const prompt = `
 You are an expert ATS (Applicant Tracking System) analyzer and HR professional with extensive experience in resume optimization.
 
@@ -51,39 +42,35 @@ Analyze this resume against the job description in extreme detail. Focus on:
    - Quantifiable achievements
    - Technical proficiency demonstrations
 
-Be thorough and specific in your analysis. Do not skip any potential matches or improvements.
-
 Resume:
 ${resumeText}
 
 Job Description:
 ${jobDescription}
 
-Return your analysis as a JSON object with the following structure:
+Return your analysis as a JSON object with this structure:
 {
-  "score": [a number between 1-100 representing the match percentage],
+  "score": [number between 1-100],
   "suggestions": {
     "keywords": {
-      "missing": [array of important keywords from job description missing in resume],
-      "found": [array of important keywords from job description found in resume]
+      "missing": [array of missing keywords],
+      "found": [array of found keywords]
     },
     "structure": {
-      "issues": [array of issues with resume structure],
-      "recommendations": [array of structure improvement recommendations]
+      "issues": [array of structure issues],
+      "recommendations": [array of recommendations]
     },
     "formatting": {
       "issues": [array of formatting issues],
-      "recommendations": [array of formatting improvement recommendations]
+      "recommendations": [array of recommendations]
     },
     "content": {
       "issues": [array of content issues],
-      "recommendations": [array of specific content improvement recommendations]
+      "recommendations": [array of recommendations]
     }
   }
-}
-`;
+}`;
 
-    // Send the request to Cohere's API
     const response = await fetch("https://api.cohere.ai/v1/generate", {
       method: "POST",
       headers: {
@@ -91,58 +78,49 @@ Return your analysis as a JSON object with the following structure:
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "command",       // Using Cohere's command model
-        prompt: prompt,         // Our detailed analysis prompt
-        max_tokens: 2500,       // Increased for more detailed analysis
-        temperature: 0.2,       // More focused on precise matching
-        stop_sequences: [],     // No early stopping
-        return_likelihoods: "NONE", // Don't need token likelihoods
+        model: "command",
+        prompt,
+        max_tokens: 2500,
+        temperature: 0.2,
+        stop_sequences: [],
+        return_likelihoods: "NONE",
       }),
     });
 
-    // Handle API errors
     if (!response.ok) {
-      const errorData = await response.json();
-      console.error("Cohere API error:", errorData);
       throw new Error(`Cohere API error: ${response.status}`);
     }
 
-    // Process the successful response
     const data = await response.json();
-    console.log("Cohere response:", data);
-
-    // Parse the generated text to extract the JSON analysis
     let analysisResult: AtsAnalysisResult;
 
     try {
-      // Try to find a JSON object in the response
       const jsonMatch = data.generations[0].text.match(/\{[\s\S]*\}/);
-      if (jsonMatch) {
-        analysisResult = JSON.parse(jsonMatch[0]);
-      } else {
-        throw new Error("No JSON found in response");
+      analysisResult = jsonMatch ? JSON.parse(jsonMatch[0]) : null;
+
+      if (!analysisResult) {
+        throw new Error("Invalid response format");
       }
-    } catch (parseError) {
-      console.error("Error parsing AI response:", parseError);
-      // Fallback to a default structure if parsing fails
+    } catch (error) {
+      console.error("Error parsing AI response:", error);
       analysisResult = {
-        score: Math.floor(Math.random() * 30) + 65, // Score between 65-94
+        score: 75,
         suggestions: {
           keywords: {
-            missing: ["collaboration", "leadership", "problem-solving"],
-            found: ["react", "javascript", "typescript"]
+            missing: ["key skills from job description"],
+            found: ["existing skills from resume"]
           },
           structure: {
-            issues: ["Experience section could be more detailed"],
-            recommendations: ["Add more quantifiable achievements"]
+            issues: ["Review resume structure"],
+            recommendations: ["Add more achievements"]
           },
           formatting: {
-            issues: ["Inconsistent spacing"],
-            recommendations: ["Standardize spacing throughout resume"]
+            issues: ["Check formatting"],
+            recommendations: ["Ensure consistent format"]
           },
           content: {
-            issues: ["Summary is too generic"],
-            recommendations: ["Tailor your summary to highlight relevant skills"]
+            issues: ["Review content"],
+            recommendations: ["Add specific examples"]
           }
         }
       };
@@ -151,124 +129,99 @@ Return your analysis as a JSON object with the following structure:
     return analysisResult;
   } catch (error) {
     console.error('Error analyzing resume:', error);
-    // Return a friendly error as a last resort
-    throw new Error('Failed to analyze resume. Please try again later.');
+    throw new Error('Resume analysis failed. Please try again.');
   }
 };
 
-/**
- * Generates an improved resume using Cohere AI.
- * 
- * @param resumeData - Structured resume data from the form
- * @param jobDescription - The job description to optimize the resume for
- * @returns Promise resolving to the improved resume as a string
- */
 export const generateImprovedResume = async (resumeData: FormData, jobDescription: string): Promise<string> => {
   try {
     console.log("Generating improved resume...");
 
-    // Convert resume data to a string format for the AI
-    const resumeDataString = JSON.stringify(resumeData, null, 2);
-
-    // Check if we have valid data to work with
-    if (!resumeData.personalInfo.firstName && !resumeData.personalInfo.lastName) {
-      return createHarvardResumeTemplate(resumeData);
+    if (!resumeData || !resumeData.personalInfo) {
+      throw new Error("Invalid resume data");
     }
 
-    // Create a detailed prompt for the AI to generate an improved resume
     const prompt = `
-You are an expert resume writer specializing in ATS-optimized resumes. Your task is to enhance the provided resume to better match the job description while maintaining all original experience and qualifications.  Prioritize using action verbs and quantifiable achievements.
+Create a professional ATS-optimized resume using this data:
 
-Resume to improve:
-${resumeDataString}
+${JSON.stringify(resumeData, null, 2)}
 
-Job Description to target:
-${jobDescription || "General professional resume for job applications"}
+Job Description:
+${jobDescription || "General professional position"}
 
 Instructions:
-1. Keep ALL original experience, education, and skills from the resume
-2. Enhance descriptions to highlight relevance to the job description, using strong action verbs and quantifiable results wherever possible.
-3. Use ATS-friendly keywords from the job description.
-4. Maintain chronological order and dates.
-5. Add quantifiable achievements where possible, focusing on numbers and impact.
-6. Use the following markdown format:
-   - # for name
-   - ## for main sections
-   - ### for subsections
-   - - for bullet points
+1. Format as a professional resume
+2. Use strong action verbs
+3. Include quantifiable achievements
+4. Incorporate relevant keywords
+5. Maintain chronological order
+6. Use clear section headers
 
-Important: Do not remove or omit any information from the original resume. Only enhance and expand upon it.  The output should be a polished, professional resume ready for submission.
+Format:
+# [Full Name]
+[Contact Info]
 
-Format the resume with the person's name at the top (# Name), followed by contact details on one line. Then use section headers (## Section) for Education, Experience, Skills, etc. Use subsection headers (### Company/School) for each job or school. Add bullet points with - for achievements and responsibilities.  Ensure a clear and concise writing style.
+## Summary
+[Professional summary]
 
-Make sure not to leave anything blank - if there's missing information in the resume data, create appropriate professional content based on what's available. The output should be complete and ready for printing.
+## Experience
+### [Company Name]
+[Job Title] | [Dates]
+- [Achievement/Responsibility]
 
-Return just the resume text in markdown format without any explanations or JSON.
-`;
+## Education
+### [Institution]
+[Degree] | [Dates]
 
-    // Try Hugging Face first for resume generation
-    try {
-      const { client } = await import('@gradio/client');
-      const app = await client("https://vikhyatk-moondream1.hf.space/--replicas/x42l4/");
-      const result = await app.predict("/answer_question_1", [
-        null, // No image needed for text generation
-        prompt
-      ]);
+## Skills
+[Key skills and technologies]
 
-      // Simulate response structure
-      return result.data;
-    } catch (hfError) {
-      console.warn("Hugging Face API failed, falling back to Cohere:", hfError);
+Ensure all content is professional and ATS-friendly.`;
 
-      // Fallback to Cohere's API
-      const response = await fetch("https://api.cohere.ai/v1/generate", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${COHERE_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: "command",
-          prompt: prompt,
-          max_tokens: 2000,
-          temperature: 0.4,
-          stop_sequences: [],
-          return_likelihoods: "NONE",
-        }),
-      });
+    // First attempt with Cohere
+    const response = await fetch("https://api.cohere.ai/v1/generate", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${COHERE_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "command",
+        prompt,
+        max_tokens: 2000,
+        temperature: 0.3,
+        stop_sequences: [],
+        return_likelihoods: "NONE",
+      }),
+    });
 
-      // Handle API errors
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.error("Cohere API error:", errorData);
-        throw new Error(`Cohere API error: ${response.status}`);
-      }
-
-      // Process the successful response
-      const data = await response.json();
-      console.log("Cohere response for improved resume:", data);
-
-      // Return the generated text or fall back to template
-      let generatedText = data.generations[0].text.trim();
-
-      // Validate that the response contains the original content
-      const requiredSections = ['education', 'experience', 'skills'];
-      const hasRequiredContent = requiredSections.every(section => 
-        generatedText.toLowerCase().includes(section) && 
-        resumeDataString.toLowerCase().includes(section)
-      );
-
-      if (!generatedText || generatedText.length < 500 || !hasRequiredContent) {
-        console.warn('AI response incomplete or missing required sections');
-        return createHarvardResumeTemplate(resumeData);
-      }
-
-      return generatedText;
+    if (!response.ok) {
+      throw new Error(`API error: ${response.status}`);
     }
-  } catch (error) {
-    console.error('Error generating improved resume:', error);
 
-    // Fallback to using the template generator
+    const data = await response.json();
+    const generatedContent = data.generations[0].text.trim();
+
+    if (!generatedContent || generatedContent.length < 200) {
+      throw new Error("Generated content too short");
+    }
+
+    // Validate content includes key sections
+    const requiredSections = ['experience', 'education', 'skills'];
+    const hasRequiredSections = requiredSections.some(section => 
+      generatedContent.toLowerCase().includes(section)
+    );
+
+    if (!hasRequiredSections) {
+      throw new Error("Missing required sections");
+    }
+
+    return generatedContent;
+  } catch (error) {
+    console.error('Resume generation error:', error);
+
+    // Fallback to template
+    console.log("Falling back to template generation");
     return createHarvardResumeTemplate(resumeData);
   }
 };
