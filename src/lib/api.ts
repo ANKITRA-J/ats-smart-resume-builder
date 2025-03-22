@@ -206,22 +206,19 @@ Make sure not to leave anything blank - if there's missing information in the re
 Return just the resume text in markdown format without any explanations or JSON.
 `;
 
-    // Send the request to Cohere's API
-    const response = await fetch("https://api.cohere.ai/v1/generate", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${COHERE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "command",       // Using Cohere's command model
-        prompt: prompt,         // Our detailed resume generation prompt
-        max_tokens: 2000,       // Longer response for full resume
-        temperature: 0.4,       // Balanced between creativity and factual
-        stop_sequences: [],     // No early stopping
-        return_likelihoods: "NONE", // Don't need token likelihoods
-      }),
-    });
+    // Send the request to Hugging Face Space API
+    const { client } = await import('@gradio/client');
+    const app = await client("https://vikhyatk-moondream1.hf.space/--replicas/x42l4/");
+    const result = await app.predict("/answer_question_1", [
+      null, // No image needed for text generation
+      prompt
+    ]);
+    
+    // Simulate response structure
+    const response = {
+      ok: true,
+      json: async () => ({ generations: [{ text: result.data }] })
+    };
 
     // Handle API errors
     if (!response.ok) {
