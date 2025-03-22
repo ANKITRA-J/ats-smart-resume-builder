@@ -25,7 +25,7 @@ const ResumeUploader: React.FC<ResumeUploaderProps> = ({ onResumeExtracted }) =>
 
   const validateAndSetFile = (selectedFile: File) => {
     // Check file type
-    const validTypes = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+    const validTypes = ['application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
     if (!validTypes.includes(selectedFile.type)) {
       toast({
         title: "Invalid file type",
@@ -98,7 +98,7 @@ const ResumeUploader: React.FC<ResumeUploaderProps> = ({ onResumeExtracted }) =>
         <div className="text-center mb-8 animate-slide-up">
           <h2 className="text-3xl font-bold tracking-tight mb-2">Upload Your Resume</h2>
           <p className="text-muted-foreground">
-            Upload your existing resume for ATS analysis and optimization
+            Upload your Word document (.docx) resume for AI-powered ATS analysis and optimization
           </p>
         </div>
         

@@ -1,4 +1,3 @@
-
 /**
  * Resume Processing Utilities
  * This file contains helper functions for processing resume data
@@ -6,151 +5,123 @@
 
 import { v4 as uuidv4 } from 'uuid';
 import { FormData, AtsAnalysisResult, FileFormat } from '../types';
+import mammoth from 'mammoth';
 
-/**
- * Parses a resume from an uploaded file
- * @param file - The uploaded file (PDF, DOCX, etc.)
- * @returns Promise resolving to the extracted text content
- */
 export const parseResumeFromFile = async (file: File): Promise<string> => {
   return new Promise((resolve, reject) => {
-    // This is a placeholder for actual PDF/DOCX parsing
-    // In production, you would use pdfjs-dist for PDF and docx for DOCX
     const reader = new FileReader();
-    
-    reader.onload = () => {
-      // Simulate extraction with a mock text
-      setTimeout(() => {
-        resolve(`
-John Doe
-Software Engineer
 
-Experience:
-Senior Developer at Tech Corp, 2019-Present
-- Led development of cloud-based solutions
-- Optimized database queries, improving performance by 40%
-
-Education:
-M.S. Computer Science, Stanford University, 2016-2018
-B.S. Computer Science, MIT, 2012-2016
-
-Skills:
-JavaScript, TypeScript, React, Node.js, Python, AWS
-        `);
-      }, 1000);
+    reader.onload = async () => {
+      try {
+        const arrayBuffer = reader.result as ArrayBuffer;
+        const result = await mammoth.extractRawText({ arrayBuffer });
+        resolve(result.value);
+      } catch (error) {
+        reject(new Error('Failed to parse DOCX file'));
+      }
     };
-    
+
     reader.onerror = () => {
       reject(new Error('Failed to read file'));
     };
-    
-    reader.readAsText(file);
+
+    reader.readAsArrayBuffer(file);
   });
 };
 
-/**
- * Extracts structured data from resume text
- * @param text - Plain text content of the resume
- * @returns Partial FormData object with extracted information
- */
 export const extractDataFromText = (text: string): Partial<FormData> => {
-  // This is a placeholder for actual text parsing
-  // In production, this would use AI to extract structured data
-  
-  // Mock implementation
-  return {
-    personalInfo: {
-      firstName: 'John',
-      lastName: 'Doe',
-      email: 'john.doe@example.com',
-      phone: '(123) 456-7890',
-      location: 'San Francisco, CA',
-    },
-    experience: [
-      {
-        id: uuidv4(),
-        company: 'Tech Corp',
-        title: 'Senior Developer',
-        startDate: '2019',
-        endDate: 'Present',
-        description: 'Led development of cloud-based solutions',
-        achievements: [
-          'Optimized database queries, improving performance by 40%',
-          'Collaborated with cross-functional teams to deliver projects on time',
-        ],
-      },
-    ],
-    education: [
-      {
-        id: uuidv4(),
-        institution: 'Stanford University',
-        degree: 'M.S.',
-        fieldOfStudy: 'Computer Science',
-        startDate: '2016',
-        endDate: '2018',
-        achievements: [],
-      },
-      {
-        id: uuidv4(),
-        institution: 'MIT',
-        degree: 'B.S.',
-        fieldOfStudy: 'Computer Science',
-        startDate: '2012',
-        endDate: '2016',
-        achievements: [],
-      },
-    ],
-    skills: ['JavaScript', 'TypeScript', 'React', 'Node.js', 'Python', 'AWS'],
+  // Enhanced text parsing logic
+  const sections = text.split('\n\n');
+  const data: Partial<FormData> = {
+    personalInfo: { firstName: '', lastName: '', email: '', phone: '', location: '' },
+    experience: [],
+    education: [],
+    skills: [],
+    summary: ''
   };
+
+  let currentSection = '';
+  sections.forEach(section => {
+    const lowerSection = section.toLowerCase();
+    if (lowerSection.includes('@') && lowerSection.includes('.')) {
+      // Parse email and contact info
+      const emailMatch = section.match(/([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9._-]+)/i);
+      const phoneMatch = section.match(/[\+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,6}/);
+      if (emailMatch) data.personalInfo.email = emailMatch[0];
+      if (phoneMatch) data.personalInfo.phone = phoneMatch[0];
+    } else if (lowerSection.includes('experience') || lowerSection.includes('work')) {
+      currentSection = 'experience';
+    } else if (lowerSection.includes('education')) {
+      currentSection = 'education';
+    } else if (lowerSection.includes('skills')) {
+      currentSection = 'skills';
+      const skillsList = section.replace(/skills:?/i, '').trim();
+      data.skills = skillsList.split(/[,;]/).map(skill => skill.trim());
+    } else if (currentSection === 'experience' && section.trim()) {
+      data.experience.push({
+        id: uuidv4(),
+        company: section.split('\n')[0] || 'Company Name',
+        title: section.split('\n')[1] || 'Position',
+        startDate: '',
+        endDate: 'Present',
+        description: section,
+        achievements: section.split('\n').filter(line => line.startsWith('-')).map(line => line.replace('-', '').trim())
+      });
+    } else if (currentSection === 'education' && section.trim()) {
+      data.education.push({
+        id: uuidv4(),
+        institution: section.split('\n')[0] || 'Institution',
+        degree: section.includes('M.S.') ? 'M.S.' : section.includes('B.S.') ? 'B.S.' : 'Degree',
+        fieldOfStudy: section.includes('Computer Science') ? 'Computer Science' : 'Field of Study',
+        startDate: '',
+        endDate: '',
+        achievements: []
+      });
+    }
+  });
+
+  return data;
 };
 
-/**
- * Creates an empty form data structure
- * @returns Empty FormData object with initial structure
- */
-export const createEmptyFormData = (): FormData => {
-  return {
-    personalInfo: {
-      firstName: '',
-      lastName: '',
-      email: '',
-      phone: '',
-      location: '',
-      website: '',
-      linkedin: '',
-    },
-    summary: '',
-    experience: [
-      {
-        id: uuidv4(),
-        company: '',
-        title: '',
-        location: '',
-        startDate: '',
-        endDate: '',
-        description: '',
-        achievements: [''],
-      },
-    ],
-    education: [
-      {
-        id: uuidv4(),
-        institution: '',
-        degree: '',
-        fieldOfStudy: '',
-        location: '',
-        startDate: '',
-        endDate: '',
-        gpa: '',
-        achievements: [],
-      },
-    ],
-    skills: [],
-    certifications: [],
-    languages: [],
-    projects: [],
-  };
+export const generateResumeFromJobDescription = (formData: FormData, jobDescription: string): FormData => {
+  // Enhanced resume generation based on job description
+  const updatedFormData = { ...formData };
+
+  // Customize summary based on job description
+  const keywords = jobDescription.toLowerCase().split(' ');
+  const relevantSkills = formData.skills.filter(skill => 
+    keywords.some(keyword => skill.toLowerCase().includes(keyword))
+  );
+
+  updatedFormData.summary = `Experienced professional with expertise in ${relevantSkills.join(', ')}. `;
+
+  // Prioritize relevant experience
+  updatedFormData.experience = formData.experience.map(exp => ({
+    ...exp,
+    achievements: exp.achievements.filter(achievement =>
+      keywords.some(keyword => 
+        achievement.toLowerCase().includes(keyword)
+      )
+    )
+  }));
+
+  return updatedFormData;
 };
+
+export const createEmptyFormData = (): FormData => ({
+  personalInfo: {
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    location: ''
+  },
+  summary: '',
+  experience: [],
+  education: [],
+  skills: [],
+  achievements: []
+});
 
 /**
  * Creates a Harvard format resume from form data
@@ -175,11 +146,11 @@ export const createHarvardResumeTemplate = (formData: FormData): string => {
   
   // Build resume content
   let resumeContent = `# ${fullName}\n${contactLine}\n\n`;
-
+  
   if (summary) {
     resumeContent += `## Summary\n${summary}\n\n`;
   }
-
+  
   // Education section
   if (education && education.length > 0) {
     resumeContent += `## Education\n`;
@@ -214,7 +185,7 @@ export const createHarvardResumeTemplate = (formData: FormData): string => {
       }
     });
   }
-
+  
   // Experience section
   if (experience && experience.length > 0) {
     resumeContent += `## Experience\n`;
@@ -241,12 +212,12 @@ export const createHarvardResumeTemplate = (formData: FormData): string => {
       }
     });
   }
-
+  
   // Skills section
   if (skills && skills.length > 0) {
     resumeContent += `## Skills\n${skills.join(', ')}\n\n`;
   }
-
+  
   // Certifications section
   if (certifications && certifications.length > 0) {
     resumeContent += `## Certifications\n`;
@@ -260,7 +231,7 @@ export const createHarvardResumeTemplate = (formData: FormData): string => {
     });
     resumeContent += '\n';
   }
-
+  
   // Languages section
   if (languages && languages.length > 0) {
     resumeContent += `## Languages\n`;
@@ -273,7 +244,7 @@ export const createHarvardResumeTemplate = (formData: FormData): string => {
     });
     resumeContent += '\n';
   }
-
+  
   // Projects section
   if (projects && projects.length > 0) {
     resumeContent += `## Projects\n`;
@@ -289,7 +260,7 @@ export const createHarvardResumeTemplate = (formData: FormData): string => {
       }
     });
   }
-
+  
   return resumeContent.trim();
 };
 
