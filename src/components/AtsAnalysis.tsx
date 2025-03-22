@@ -29,40 +29,64 @@ import {
   Target,
   Lightbulb,
   FileText,
-  AlertTriangle
+  AlertTriangle,
+  Sparkles
 } from 'lucide-react';
 import { AtsAnalysisResult } from '@/types';
 import { getScoreColor } from '@/utils/resumeHelpers';
 import { analyzeResume } from '@/lib/api';
+import { useToast } from '@/hooks/use-toast';
 
 interface AtsAnalysisProps {
   resumeText: string;
   onImproveResume: () => void;
+  onJobDescriptionChange: (description: string) => void;
 }
 
 const AtsAnalysis: React.FC<AtsAnalysisProps> = ({ 
   resumeText, 
-  onImproveResume 
+  onImproveResume,
+  onJobDescriptionChange
 }) => {
   const [jobDescription, setJobDescription] = useState('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<AtsAnalysisResult | null>(null);
   const [activeTab, setActiveTab] = useState('keywords');
+  const { toast } = useToast();
 
   const handleJobDescriptionChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setJobDescription(e.target.value);
+    onJobDescriptionChange(e.target.value);
   };
 
   const handleAnalyze = async () => {
-    if (!jobDescription.trim()) return;
+    if (!jobDescription.trim()) {
+      toast({
+        title: "Job description required",
+        description: "Please enter a job description to analyze your resume against.",
+        variant: "destructive"
+      });
+      return;
+    }
     
     setIsAnalyzing(true);
     
     try {
       const result = await analyzeResume(resumeText, jobDescription);
       setAnalysisResult(result);
+      
+      toast({
+        title: "Analysis complete",
+        description: `Your resume scored ${result.score}/100 against this job description.`,
+        variant: result.score >= 80 ? "default" : "destructive"
+      });
     } catch (error) {
       console.error('Error analyzing resume:', error);
+      toast({
+        title: "Analysis failed",
+        description: "There was an error analyzing your resume. Please try again.",
+        variant: "destructive"
+      });
     } finally {
       setIsAnalyzing(false);
     }
@@ -124,16 +148,17 @@ const AtsAnalysis: React.FC<AtsAnalysisProps> = ({
     
     return (
       <div className="mt-8 animate-fade-in">
-        <Card>
-          <CardHeader>
+        <Card className="border border-primary/20 shadow-md">
+          <CardHeader className="bg-muted/30">
             <CardTitle className="text-xl flex items-center">
+              <Sparkles className="h-5 w-5 mr-2 text-primary" />
               ATS Analysis Result
             </CardTitle>
             <CardDescription>
               Based on the job description and your resume
             </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="pt-6">
             <div className="mb-6 text-center">
               {renderScoreGauge(analysisResult.score)}
               <p className={`text-lg font-medium ${getScoreColor(analysisResult.score)}`}>
@@ -328,9 +353,10 @@ const AtsAnalysis: React.FC<AtsAnalysisProps> = ({
               </TabsContent>
             </Tabs>
           </CardContent>
-          <CardFooter>
+          <CardFooter className="bg-muted/20 border-t px-6 py-4">
             <Button onClick={onImproveResume} className="w-full">
-              Improve My Resume
+              <Sparkles className="w-4 h-4 mr-2" />
+              Generate Improved Resume
             </Button>
           </CardFooter>
         </Card>
@@ -348,7 +374,7 @@ const AtsAnalysis: React.FC<AtsAnalysisProps> = ({
           </p>
         </div>
         
-        <Card>
+        <Card className="border border-primary/20 shadow-md">
           <CardHeader>
             <CardTitle>Enter Job Description</CardTitle>
             <CardDescription>
@@ -365,6 +391,7 @@ const AtsAnalysis: React.FC<AtsAnalysisProps> = ({
                   onChange={handleJobDescriptionChange}
                   placeholder="Paste the job description here..."
                   rows={8}
+                  className="resize-none"
                 />
               </div>
               
@@ -398,6 +425,7 @@ const AtsAnalysis: React.FC<AtsAnalysisProps> = ({
             <Button 
               onClick={handleAnalyze} 
               disabled={!jobDescription.trim() || isAnalyzing}
+              className="gap-2"
             >
               {isAnalyzing ? (
                 <>
@@ -405,7 +433,10 @@ const AtsAnalysis: React.FC<AtsAnalysisProps> = ({
                   Analyzing...
                 </>
               ) : (
-                'Analyze Resume'
+                <>
+                  <Target className="w-4 h-4" />
+                  Analyze Resume
+                </>
               )}
             </Button>
           </CardFooter>

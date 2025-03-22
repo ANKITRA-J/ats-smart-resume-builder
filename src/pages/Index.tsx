@@ -36,6 +36,10 @@ const Index = () => {
     setActiveTab('preview');
   };
 
+  const handleJobDescriptionChange = (description: string) => {
+    setJobDescription(description);
+  };
+
   const renderActiveTab = () => {
     switch (activeTab) {
       case 'upload':
@@ -43,9 +47,21 @@ const Index = () => {
       case 'create':
         return <ResumeForm formData={formData} setFormData={setFormData} onCompleted={handleFormCompleted} />;
       case 'analyze':
-        return <AtsAnalysis resumeText={resumeText} onImproveResume={handleImproveResume} />;
+        return (
+          <AtsAnalysis 
+            resumeText={resumeText} 
+            onImproveResume={handleImproveResume} 
+            onJobDescriptionChange={handleJobDescriptionChange}
+          />
+        );
       case 'preview':
-        return <ResumePreview formData={formData} jobDescription={jobDescription} resumeText={resumeText} />;
+        return (
+          <ResumePreview 
+            formData={formData} 
+            jobDescription={jobDescription} 
+            resumeText={resumeText} 
+          />
+        );
       default:
         return null;
     }
