@@ -151,19 +151,27 @@ export const generateImprovedResume = async (resumeData: FormData, jobDescriptio
 
     // Create a detailed prompt for the AI to generate an improved resume
     const prompt = `
-You are an expert resume writer specializing in ATS-optimized resumes using the Harvard format.
+You are an expert resume writer specializing in ATS-optimized resumes. Your task is to enhance the provided resume to better match the job description while maintaining all original experience and qualifications.
 
-I'll provide you with resume data and a job description. Your task is to create an improved, ATS-friendly resume following the Harvard format with markdown formatting. Use the following markdown syntax:
-- # for the name at the top
-- ## for main section headers
-- ### for subsection headers
-- - for bullet points
-
-Resume Data:
+Resume to improve:
 ${resumeDataString}
 
-Job Description:
+Job Description to target:
 ${jobDescription || "General professional resume for job applications"}
+
+Instructions:
+1. Keep ALL original experience, education, and skills from the resume
+2. Enhance descriptions to highlight relevance to the job
+3. Use ATS-friendly keywords from the job description
+4. Maintain chronological order and dates
+5. Add quantifiable achievements where possible
+6. Use the following markdown format:
+   - # for name
+   - ## for main sections
+   - ### for subsections
+   - - for bullet points
+
+Important: Do not remove or omit any information from the original resume. Only enhance and expand upon it.
 
 Format the resume with the person's name at the top (# Name), followed by contact details on one line. Then use section headers (## Section) for Education, Experience, Skills, etc. Use subsection headers (### Company/School) for each job or school. Add bullet points with - for achievements and responsibilities.
 
@@ -201,8 +209,17 @@ Return just the resume text in markdown format without any explanations or JSON.
     console.log("Cohere response for improved resume:", data);
 
     // Return the generated text or fall back to template
-    const generatedText = data.generations[0].text.trim();
-    if (!generatedText || generatedText.length < 100) {
+    let generatedText = data.generations[0].text.trim();
+    
+    // Validate that the response contains the original content
+    const requiredSections = ['education', 'experience', 'skills'];
+    const hasRequiredContent = requiredSections.every(section => 
+      generatedText.toLowerCase().includes(section) && 
+      resumeDataString.toLowerCase().includes(section)
+    );
+
+    if (!generatedText || generatedText.length < 500 || !hasRequiredContent) {
+      console.warn('AI response incomplete or missing required sections');
       return createHarvardResumeTemplate(resumeData);
     }
 
