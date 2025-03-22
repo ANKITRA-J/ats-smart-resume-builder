@@ -17,14 +17,26 @@ export const parseResumeFromFile = async (file: File): Promise<string> => {
     reader.onload = async () => {
       try {
         const arrayBuffer = reader.result as ArrayBuffer;
-        const result = await mammoth.extractRawText({ arrayBuffer });
+        const result = await mammoth.extractRawText({ 
+          arrayBuffer,
+          includeDefaultStyleMap: true,
+          preserveEmpty: true
+        });
+        
+        if (!result.value) {
+          throw new Error('No content extracted from file');
+        }
+
+        console.log('Extracted resume content:', result.value);
         resolve(result.value);
       } catch (error) {
-        reject(new Error('Failed to parse DOCX file'));
+        console.error('DOCX parsing error:', error);
+        reject(new Error(`Failed to parse DOCX file: ${error.message}`));
       }
     };
 
-    reader.onerror = () => {
+    reader.onerror = (error) => {
+      console.error('File reading error:', error);
       reject(new Error('Failed to read file'));
     };
 

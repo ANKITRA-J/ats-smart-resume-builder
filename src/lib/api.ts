@@ -18,14 +18,40 @@ export const analyzeResume = async (resumeText: string, jobDescription: string):
 
     // Create a detailed prompt for the AI to analyze the resume
     const prompt = `
-You are an expert ATS (Applicant Tracking System) analyzer and HR professional.
+You are an expert ATS (Applicant Tracking System) analyzer and HR professional with extensive experience in resume optimization.
 
-I'm going to provide you with a resume and a job description. Your task is to:
-1. Analyze how well the resume matches the job description
-2. Identify keywords from the job description that are missing in the resume
-3. Identify keywords from the job description that are present in the resume
-4. Identify issues with the resume structure and formatting
-5. Provide specific content improvement recommendations
+Analyze this resume against the job description in extreme detail. Focus on:
+
+1. DETAILED KEYWORD ANALYSIS:
+   - Extract ALL keywords from the job description
+   - Check for exact matches, partial matches, and semantic matches
+   - Consider industry-specific terminologies and variations
+
+2. SKILLS ASSESSMENT:
+   - Technical skills alignment
+   - Soft skills presence
+   - Required certifications/qualifications
+   - Experience level match
+
+3. EXPERIENCE EVALUATION:
+   - Role responsibilities alignment
+   - Industry relevance
+   - Achievement metrics
+   - Leadership/management requirements
+
+4. COMPREHENSIVE STRUCTURE ANALYSIS:
+   - Section organization
+   - Content hierarchy
+   - Information flow
+   - Professional formatting
+
+5. DETAILED RECOMMENDATIONS:
+   - Specific phrasing improvements
+   - Missing critical experiences
+   - Quantifiable achievements
+   - Technical proficiency demonstrations
+
+Be thorough and specific in your analysis. Do not skip any potential matches or improvements.
 
 Resume:
 ${resumeText}
@@ -67,8 +93,8 @@ Return your analysis as a JSON object with the following structure:
       body: JSON.stringify({
         model: "command",       // Using Cohere's command model
         prompt: prompt,         // Our detailed analysis prompt
-        max_tokens: 1000,       // Maximum response length
-        temperature: 0.3,       // Lower temperature for more factual responses
+        max_tokens: 2500,       // Increased for more detailed analysis
+        temperature: 0.2,       // More focused on precise matching
         stop_sequences: [],     // No early stopping
         return_likelihoods: "NONE", // Don't need token likelihoods
       }),
