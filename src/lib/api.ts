@@ -3,15 +3,10 @@ import { AtsAnalysisResult, FormData } from '@/types';
 import { createHarvardResumeTemplate } from '@/utils/resumeHelpers';
 
 // API key for Cohere AI - used for AI-powered resume analysis
-const OPENAI_API_KEY = process.env.OPENAI_API_KEY || "";
-import OpenAI from 'openai';
-
-const openai = new OpenAI({
-  apiKey: OPENAI_API_KEY,
-});
+const COHERE_API_KEY = "j7J7nPQUxOaCKHq7izOkPFjeUWlWi1tuOfVTM3IT";
 
 /**
- * Analyzes a resume against a job description using AI.
+ * Analyzes a resume against a job description using Cohere AI.
  * 
  * @param resumeText - The text content of the resume
  * @param jobDescription - The text content of the job description to match against
@@ -212,26 +207,21 @@ Return just the resume text in markdown format without any explanations or JSON.
 `;
 
     // Send the request to Cohere's API
-    const completion = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo",
-      messages: [
-        {
-          role: "system",
-          content: "You are an expert resume writer specializing in creating ATS-optimized resumes. Follow the formatting instructions exactly and maintain all original information while enhancing descriptions."
-        },
-        {
-          role: "user",
-          content: prompt
-        }
-      ],
-      temperature: 0.7,
-      max_tokens: 2500
+    const response = await fetch("https://api.cohere.ai/v1/generate", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${COHERE_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "command",       // Using Cohere's command model
+        prompt: prompt,         // Our detailed resume generation prompt
+        max_tokens: 2000,       // Longer response for full resume
+        temperature: 0.4,       // Balanced between creativity and factual
+        stop_sequences: [],     // No early stopping
+        return_likelihoods: "NONE", // Don't need token likelihoods
+      }),
     });
-
-    const response = completion.choices[0]?.message?.content;
-    if (!response) {
-      throw new Error('No response from OpenAI');
-    }
 
     // Handle API errors
     if (!response.ok) {
