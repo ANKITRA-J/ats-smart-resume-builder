@@ -19,6 +19,7 @@ This is a web application designed to create ATS-optimized resumes. It uses AI t
 - Tailwind CSS for styling
 - shadcn/ui components
 - Cohere AI API for resume analysis
+- hugging face space public text genration ai integration too
 
 ## Code Structure
 
