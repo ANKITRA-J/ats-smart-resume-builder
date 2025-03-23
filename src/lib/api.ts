@@ -4,15 +4,37 @@ import { AtsAnalysisResult, FormData } from '@/types';
 import { createHarvardResumeTemplate } from '@/utils/resumeHelpers';
 
 // Secure API key handling
+const API_KEY_STORAGE_KEY = 'cohere_api_key_encrypted';
+
+// Function to encrypt the API key (basic obfuscation)
+const encryptKey = (key: string): string => {
+  return btoa(key); // Basic encoding, not true encryption
+};
+
+// Function to decrypt the API key
+const decryptKey = (encryptedKey: string): string => {
+  try {
+    return atob(encryptedKey);
+  } catch (error) {
+    return '';
+  }
+};
+
+// Function to get the API key securely
 const getApiKey = (): string => {
-  // For production, this should come from environment variables
-  // For now, we'll use a function to avoid direct exposure
-  const key = localStorage.getItem('cohere_api_key');
-  if (key) return key;
-  
-  // Fallback to default (this is still not secure, but better than hardcoded)
-  // In a production app, this would be handled differently
+  const encryptedKey = localStorage.getItem(API_KEY_STORAGE_KEY);
+  if (encryptedKey) {
+    return decryptKey(encryptedKey);
+  }
   return "";
+};
+
+// Function to save the API key securely
+const saveApiKey = (key: string): void => {
+  if (key) {
+    const encryptedKey = encryptKey(key);
+    localStorage.setItem(API_KEY_STORAGE_KEY, encryptedKey);
+  }
 };
 
 // Function to ensure we have an API key
@@ -23,11 +45,21 @@ const ensureApiKey = (): string => {
   if (!key) {
     key = prompt("Please enter your Cohere API key to continue. This will be stored locally and not shared.");
     if (key) {
-      localStorage.setItem('cohere_api_key', key);
+      saveApiKey(key);
     }
   }
   
   return key;
+};
+
+// Allow users to manually clear their API key if needed
+export const clearApiKey = (): void => {
+  localStorage.removeItem(API_KEY_STORAGE_KEY);
+};
+
+// Check if an API key exists
+export const hasApiKey = (): boolean => {
+  return !!getApiKey();
 };
 
 export const analyzeResume = async (resumeText: string, jobDescription: string): Promise<AtsAnalysisResult> => {

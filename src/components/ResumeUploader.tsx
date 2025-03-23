@@ -25,8 +25,12 @@ const ResumeUploader: React.FC<ResumeUploaderProps> = ({ onResumeExtracted }) =>
   };
 
   const validateAndSetFile = (selectedFile: File) => {
-    // Check file type
-    const validTypes = ['application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+    // Check file type - Updated to include PDF files too
+    const validTypes = [
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // docx
+      'application/pdf' // pdf
+    ];
+    
     if (!validTypes.includes(selectedFile.type)) {
       toast({
         title: "Invalid file type",
@@ -105,7 +109,7 @@ const ResumeUploader: React.FC<ResumeUploaderProps> = ({ onResumeExtracted }) =>
         <div className="text-center mb-8 animate-slide-up">
           <h2 className="text-3xl font-bold tracking-tight mb-2">Upload Your Resume</h2>
           <p className="text-muted-foreground">
-            Upload your Word document (.docx) resume for AI-powered ATS analysis and optimization
+            Upload your resume (.docx or .pdf) for AI-powered ATS analysis and optimization
           </p>
         </div>
         
@@ -130,18 +134,19 @@ const ResumeUploader: React.FC<ResumeUploaderProps> = ({ onResumeExtracted }) =>
               </h3>
               
               <p className="text-sm text-muted-foreground mb-6 max-w-md text-center">
-                Supported format: DOCX (Max 5MB)
+                Supported formats: PDF, DOCX (Max 5MB)
               </p>
               
               <div className="flex flex-col sm:flex-row gap-4">
                 <input
                   ref={fileInputRef}
                   type="file"
-                  accept=".docx"
+                  accept=".docx,.pdf"
                   onChange={handleFileChange}
                   className="hidden"
+                  id="resume-file-input"
                 />
-                <Button variant="outline" onClick={handleBrowseClick}>
+                <Button variant="outline" onClick={handleBrowseClick} type="button">
                   <FileIcon className="mr-2 h-4 w-4" />
                   Browse Files
                 </Button>
