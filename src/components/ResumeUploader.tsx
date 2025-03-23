@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useToast } from '@/components/ui/use-toast';
@@ -15,6 +14,7 @@ const ResumeUploader: React.FC<ResumeUploaderProps> = ({ onResumeExtracted }) =>
   const [isUploading, setIsUploading] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const { toast } = useToast();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -24,12 +24,15 @@ const ResumeUploader: React.FC<ResumeUploaderProps> = ({ onResumeExtracted }) =>
   };
 
   const validateAndSetFile = (selectedFile: File) => {
-    // Check file type
-    const validTypes = ['application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+    // Check file type - Only accept DOCX files
+    const validTypes = [
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // docx
+    ];
+    
     if (!validTypes.includes(selectedFile.type)) {
       toast({
         title: "Invalid file type",
-        description: "Please upload a PDF or DOCX file.",
+        description: "Please upload a DOCX file only.",
         variant: "destructive"
       });
       return;
@@ -67,6 +70,12 @@ const ResumeUploader: React.FC<ResumeUploaderProps> = ({ onResumeExtracted }) =>
     }
   };
 
+  const handleBrowseClick = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  };
+
   const handleUpload = async () => {
     if (!file) return;
     
@@ -98,7 +107,7 @@ const ResumeUploader: React.FC<ResumeUploaderProps> = ({ onResumeExtracted }) =>
         <div className="text-center mb-8 animate-slide-up">
           <h2 className="text-3xl font-bold tracking-tight mb-2">Upload Your Resume</h2>
           <p className="text-muted-foreground">
-            Upload your Word document (.docx) resume for AI-powered ATS analysis and optimization
+            Upload your resume (.docx) for AI-powered ATS analysis and optimization
           </p>
         </div>
         
@@ -123,22 +132,22 @@ const ResumeUploader: React.FC<ResumeUploaderProps> = ({ onResumeExtracted }) =>
               </h3>
               
               <p className="text-sm text-muted-foreground mb-6 max-w-md text-center">
-                Supported format: DOCX (Max 5MB)
+                Supported format: DOCX only (Max 5MB)
               </p>
               
               <div className="flex flex-col sm:flex-row gap-4">
-                <div className="relative">
-                  <input
-                    type="file"
-                    accept=".docx"
-                    onChange={handleFileChange}
-                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                  />
-                  <Button variant="outline" className="relative">
-                    <FileIcon className="mr-2 h-4 w-4" />
-                    Browse Files
-                  </Button>
-                </div>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".docx"
+                  onChange={handleFileChange}
+                  className="hidden"
+                  id="resume-file-input"
+                />
+                <Button variant="outline" onClick={handleBrowseClick} type="button">
+                  <FileIcon className="mr-2 h-4 w-4" />
+                  Browse Files
+                </Button>
                 
                 <Button 
                   onClick={handleUpload} 

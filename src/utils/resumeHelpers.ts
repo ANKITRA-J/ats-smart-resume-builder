@@ -19,11 +19,8 @@ export const parseResumeFromFile = async (file: File): Promise<string> => {
     reader.onload = async () => {
       try {
         const arrayBuffer = reader.result as ArrayBuffer;
-        // Remove invalid properties from mammoth options
         const result = await mammoth.extractRawText({ 
-          arrayBuffer,
-          // Remove the includeDefaultStyleMap property as it's not in the type definition
-          preserveEmpty: true
+          arrayBuffer 
         });
         
         if (!result.value) {
@@ -118,7 +115,6 @@ export const createEmptyFormData = (): FormData => ({
   experience: [],
   education: [],
   skills: []
-  // Remove achievements as it's not in the FormData interface
 });
 
 /**
@@ -294,7 +290,7 @@ export const createDocxFromMarkdown = (markdownContent: string): Document => {
               color: "#000000", 
               size: 10, 
               space: 1,
-              style: BorderStyle.SINGLE // Add the required style property
+              style: BorderStyle.SINGLE
             } 
           }
         })

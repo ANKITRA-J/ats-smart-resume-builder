@@ -7,15 +7,18 @@ import {
   CardHeader, 
   CardTitle 
 } from '@/components/ui/card';
+import { Textarea } from '@/components/ui/textarea';
 import { 
   Download, 
   FileText, 
   CheckCircle2,
-  FileOutput
+  FileOutput,
+  Edit,
+  Save
 } from 'lucide-react';
 import { FormData, FileFormat } from '@/types';
 import { exportResume, createHarvardResumeTemplate } from '@/utils/resumeHelpers';
-import { generateImprovedResume } from '@/lib/api';
+import { generateImprovedResume, clearApiKey, hasApiKey } from '@/lib/api';
 import { useToast } from "@/hooks/use-toast";
 
 interface ResumePreviewProps {
@@ -34,6 +37,8 @@ const ResumePreview: React.FC<ResumePreviewProps> = ({
   const [isGenerating, setIsGenerating] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [improvedContent, setImprovedContent] = useState<string>('');
+  const [isEditing, setIsEditing] = useState(false);
+  const [editableContent, setEditableContent] = useState<string>('');
   const { toast } = useToast();
 
   const handleGenerateImprovedResume = async () => {
@@ -43,6 +48,7 @@ const ResumePreview: React.FC<ResumePreviewProps> = ({
       // First try to use the AI generated content
       const content = await generateImprovedResume(formData, jobDescription);
       setImprovedContent(content);
+      setEditableContent(content);
 
       toast({
         title: "Resume Generated",
@@ -55,6 +61,7 @@ const ResumePreview: React.FC<ResumePreviewProps> = ({
       // Fallback to using the template directly
       const fallbackContent = createHarvardResumeTemplate(formData);
       setImprovedContent(fallbackContent);
+      setEditableContent(fallbackContent);
 
       toast({
         title: "Using Template",
@@ -69,7 +76,10 @@ const ResumePreview: React.FC<ResumePreviewProps> = ({
   const handleExportResume = async () => {
     setIsExporting(true);
     try {
-      const blob = await exportResume(formData, 'docx', improvedContent);
+      // Use the edited content if in edit mode
+      const contentToExport = isEditing ? editableContent : improvedContent;
+      
+      const blob = await exportResume(formData, 'docx', contentToExport);
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -97,6 +107,36 @@ const ResumePreview: React.FC<ResumePreviewProps> = ({
     }
   };
 
+  const toggleEditMode = () => {
+    if (isEditing) {
+      // Save changes
+      setImprovedContent(editableContent);
+      setIsEditing(false);
+      
+      toast({
+        title: "Changes Saved",
+        description: "Your edits have been applied to the resume",
+        variant: "default",
+      });
+    } else {
+      // Enter edit mode
+      setIsEditing(true);
+    }
+  };
+
+  const handleContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setEditableContent(e.target.value);
+  };
+
+  const resetApiKey = () => {
+    clearApiKey();
+    toast({
+      title: "API Key Cleared",
+      description: "Your Cohere API key has been removed from local storage",
+      variant: "default",
+    });
+  };
+
   useEffect(() => {
     if (formData && !improvedContent) {
       handleGenerateImprovedResume();
@@ -119,7 +159,7 @@ const ResumePreview: React.FC<ResumePreviewProps> = ({
         <div className="text-center mb-8 animate-slide-up">
           <h2 className="text-3xl font-bold tracking-tight mb-2">Your Resume</h2>
           <p className="text-muted-foreground">
-            Preview and download your ATS-optimized resume
+            Preview, edit, and download your ATS-optimized resume
           </p>
         </div>
 
@@ -194,6 +234,34 @@ const ResumePreview: React.FC<ResumePreviewProps> = ({
                     </>
                   )}
                 </Button>
+
+                <Button 
+                  variant="outline" 
+                  onClick={toggleEditMode}
+                  className="w-full"
+                >
+                  {isEditing ? (
+                    <>
+                      <Save className="mr-2 h-4 w-4" />
+                      Save Changes
+                    </>
+                  ) : (
+                    <>
+                      <Edit className="mr-2 h-4 w-4" />
+                      Edit Resume
+                    </>
+                  )}
+                </Button>
+
+                {hasApiKey() && (
+                  <Button 
+                    variant="outline" 
+                    onClick={resetApiKey}
+                    className="w-full text-red-500 hover:text-red-600"
+                  >
+                    Reset API Key
+                  </Button>
+                )}
               </CardContent>
             </Card>
           </div>
@@ -204,30 +272,39 @@ const ResumePreview: React.FC<ResumePreviewProps> = ({
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-lg flex items-center">
                     <FileText className="h-5 w-5 mr-2 text-muted-foreground" />
-                    Resume Preview
+                    {isEditing ? 'Edit Resume' : 'Resume Preview'}
                   </CardTitle>
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="bg-white text-black border rounded-md p-6 shadow-sm min-h-[70vh] overflow-y-auto prose prose-sm max-w-none">
-                  {isGenerating ? (
-                    <div className="flex items-center justify-center h-full text-muted-foreground">
-                      <div className="text-center">
-                        <div className="animate-spin inline-block w-8 h-8 border-4 border-current border-t-transparent rounded-full mb-4" />
-                        <p>Generating your resume...</p>
+                {isEditing ? (
+                  <Textarea 
+                    value={editableContent}
+                    onChange={handleContentChange}
+                    className="min-h-[70vh] font-mono text-sm"
+                    placeholder="Edit your resume content here..."
+                  />
+                ) : (
+                  <div className="bg-white text-black border rounded-md p-6 shadow-sm min-h-[70vh] overflow-y-auto prose prose-sm max-w-none">
+                    {isGenerating ? (
+                      <div className="flex items-center justify-center h-full text-muted-foreground">
+                        <div className="text-center">
+                          <div className="animate-spin inline-block w-8 h-8 border-4 border-current border-t-transparent rounded-full mb-4" />
+                          <p>Generating your resume...</p>
+                        </div>
                       </div>
-                    </div>
-                  ) : improvedContent ? (
-                    <div 
-                      className="whitespace-pre-wrap" 
-                      dangerouslySetInnerHTML={{ __html: formatMarkdown(improvedContent) }} 
-                    />
-                  ) : (
-                    <div className="flex items-center justify-center h-full text-muted-foreground">
-                      <p>No content to preview</p>
-                    </div>
-                  )}
-                </div>
+                    ) : improvedContent ? (
+                      <div 
+                        className="whitespace-pre-wrap" 
+                        dangerouslySetInnerHTML={{ __html: formatMarkdown(improvedContent) }} 
+                      />
+                    ) : (
+                      <div className="flex items-center justify-center h-full text-muted-foreground">
+                        <p>No content to preview</p>
+                      </div>
+                    )}
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>
