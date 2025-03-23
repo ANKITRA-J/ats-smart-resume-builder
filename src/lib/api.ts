@@ -1,3 +1,4 @@
+
 // Cohere AI API Integration
 import { AtsAnalysisResult, FormData } from '@/types';
 import { createHarvardResumeTemplate } from '@/utils/resumeHelpers';
@@ -133,18 +134,18 @@ Return your analysis as a JSON object with this structure:
   }
 };
 
-export const generateImprovedResume = async (resumeData: FormData, jobDescription: string): Promise<string> => {
+export const generateImprovedResume = async (formData: FormData, jobDescription: string): Promise<string> => {
   try {
     console.log("Generating improved resume...");
 
-    if (!resumeData || !resumeData.personalInfo) {
+    if (!formData || !formData.personalInfo) {
       throw new Error("Invalid resume data");
     }
 
     const prompt = `
 Create a professional ATS-optimized resume using this data:
 
-${JSON.stringify(resumeData, null, 2)}
+${JSON.stringify(formData, null, 2)}
 
 Job Description:
 ${jobDescription || "General professional position"}
@@ -222,6 +223,6 @@ Ensure all content is professional and ATS-friendly.`;
 
     // Fallback to template
     console.log("Falling back to template generation");
-    return createHarvardResumeTemplate(resumeData);
+    return createHarvardResumeTemplate(formData);
   }
 };

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { 
@@ -28,7 +29,7 @@ const ResumePreview: React.FC<ResumePreviewProps> = ({
   jobDescription = '',
   resumeText = ''
 }) => {
-  const [fileFormat, setFileFormat] = useState<FileFormat>('pdf');
+  const [fileFormat, setFileFormat] = useState<FileFormat>('docx');
   const [template, setTemplate] = useState<string>('harvard');
   const [isGenerating, setIsGenerating] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
@@ -68,11 +69,11 @@ const ResumePreview: React.FC<ResumePreviewProps> = ({
   const handleExportResume = async () => {
     setIsExporting(true);
     try {
-      const blob = await exportResume(formData, 'docx', improvedContent); // Explicitly setting fileFormat to 'docx'
+      const blob = await exportResume(formData, 'docx', improvedContent);
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `${formData.personalInfo.firstName || 'Resume'}_${formData.personalInfo.lastName || 'Template'}.docx`; //Corrected download filename
+      a.download = `${formData.personalInfo.firstName || 'Resume'}_${formData.personalInfo.lastName || 'Template'}.docx`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);

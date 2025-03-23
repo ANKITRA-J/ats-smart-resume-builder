@@ -1,3 +1,4 @@
+
 /**
  * Resume Processing Utilities
  * This file contains helper functions for processing resume data
@@ -6,10 +7,11 @@
 import { v4 as uuidv4 } from 'uuid';
 import { FormData, AtsAnalysisResult, FileFormat } from '../types';
 import mammoth from 'mammoth';
-import docx from 'docx';
-import { Document, Paragraph, TextRun, HeadingLevel, Table, TableRow, TableCell, WidthType } from 'docx';
-import { Packer } from 'docx';
+import { Document, Paragraph, TextRun, HeadingLevel, Table, TableRow, TableCell, WidthType, Packer } from 'docx';
 
+/**
+ * Parses resume content from an uploaded file
+ */
 export const parseResumeFromFile = async (file: File): Promise<string> => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -44,6 +46,9 @@ export const parseResumeFromFile = async (file: File): Promise<string> => {
   });
 };
 
+/**
+ * Extracts structured data from resume text
+ */
 export const extractDataFromText = (text: string): Partial<FormData> => {
   // Enhanced text parsing logic
   const sections = text.split('\n\n');
@@ -98,31 +103,7 @@ export const extractDataFromText = (text: string): Partial<FormData> => {
   return data;
 };
 
-export const generateResumeFromJobDescription = (formData: FormData, jobDescription: string): FormData => {
-  // Enhanced resume generation based on job description
-  const updatedFormData = { ...formData };
-
-  // Customize summary based on job description
-  const keywords = jobDescription.toLowerCase().split(' ');
-  const relevantSkills = formData.skills.filter(skill =>
-    keywords.some(keyword => skill.toLowerCase().includes(keyword))
-  );
-
-  updatedFormData.summary = `Experienced professional with expertise in ${relevantSkills.join(', ')}. `;
-
-  // Prioritize relevant experience
-  updatedFormData.experience = formData.experience.map(exp => ({
-    ...exp,
-    achievements: exp.achievements.filter(achievement =>
-      keywords.some(keyword =>
-        achievement.toLowerCase().includes(keyword)
-      )
-    )
-  }));
-
-  return updatedFormData;
-};
-
+// Creates an empty form data structure
 export const createEmptyFormData = (): FormData => ({
   personalInfo: {
     firstName: '',
@@ -279,101 +260,127 @@ export const createHarvardResumeTemplate = (formData: FormData): string => {
   return resumeContent.trim();
 };
 
-export const createDocxDocument = (formData: FormData) => {
-  const doc = new Document({
+/**
+ * Creates a DOCX document from formatted resume content
+ */
+export const createDocxFromMarkdown = (markdownContent: string): Document => {
+  const children = [];
+  const lines = markdownContent.split('\n');
+
+  let currentList = [];
+  let inList = false;
+
+  for (const line of lines) {
+    if (line.startsWith('# ')) {
+      // Heading 1 (Name)
+      children.push(
+        new Paragraph({
+          text: line.substring(2),
+          heading: HeadingLevel.HEADING_1,
+          spacing: { after: 200 }
+        })
+      );
+    } else if (line.startsWith('## ')) {
+      // Heading 2 (Section titles)
+      children.push(
+        new Paragraph({
+          text: line.substring(3),
+          heading: HeadingLevel.HEADING_2,
+          spacing: { before: 400, after: 200 },
+          border: { bottom: { color: "#000000", size: 10, space: 1 } }
+        })
+      );
+    } else if (line.startsWith('### ')) {
+      // Heading 3 (Subsections)
+      children.push(
+        new Paragraph({
+          text: line.substring(4),
+          heading: HeadingLevel.HEADING_3,
+          spacing: { before: 300, after: 100 }
+        })
+      );
+    } else if (line.startsWith('- ')) {
+      // List item
+      if (!inList) {
+        inList = true;
+        currentList = [];
+      }
+      
+      currentList.push(
+        new Paragraph({
+          text: line.substring(2),
+          bullet: { level: 0 },
+          spacing: { before: 100, after: 100 }
+        })
+      );
+    } else if (line.trim() === '') {
+      // Empty line
+      if (inList) {
+        // Add the current list items to the document
+        children.push(...currentList);
+        currentList = [];
+        inList = false;
+      }
+      
+      children.push(
+        new Paragraph({
+          text: '',
+          spacing: { before: 100, after: 100 }
+        })
+      );
+    } else {
+      // Regular paragraph
+      if (inList) {
+        // Add the current list items to the document
+        children.push(...currentList);
+        currentList = [];
+        inList = false;
+      }
+      
+      children.push(
+        new Paragraph({
+          text: line,
+          spacing: { before: 100, after: 100 }
+        })
+      );
+    }
+  }
+
+  // Add any remaining list items
+  if (inList && currentList.length > 0) {
+    children.push(...currentList);
+  }
+
+  return new Document({
     sections: [{
       properties: {},
-      children: [
-        new Paragraph({
-          text: `${formData.personalInfo.firstName} ${formData.personalInfo.lastName}`,
-          heading: HeadingLevel.HEADING_1,
-        }),
-        new Paragraph({
-          children: [
-            new TextRun(`${formData.personalInfo.email} | ${formData.personalInfo.phone} | ${formData.personalInfo.location}`),
-          ],
-        }),
-        new Paragraph({
-          text: "Professional Summary",
-          heading: HeadingLevel.HEADING_2,
-        }),
-        new Paragraph({
-          text: formData.summary,
-        }),
-        new Paragraph({
-          text: "Experience",
-          heading: HeadingLevel.HEADING_2,
-        }),
-        ...formData.experience.map(exp => [
-          new Paragraph({
-            children: [
-              new TextRun({
-                text: exp.title,
-                bold: true,
-              }),
-              new TextRun(" at "),
-              new TextRun({
-                text: exp.company,
-                bold: true,
-              }),
-            ],
-          }),
-          new Paragraph({
-            text: `${exp.startDate} - ${exp.endDate}`,
-            style: "italic",
-          }),
-          new Paragraph({
-            text: exp.description,
-          }),
-        ]).flat(),
-        new Paragraph({
-          text: "Education",
-          heading: HeadingLevel.HEADING_2,
-        }),
-        ...formData.education.map(edu => [
-          new Paragraph({
-            children: [
-              new TextRun({
-                text: edu.degree,
-                bold: true,
-              }),
-              new TextRun(" - "),
-              new TextRun({
-                text: edu.institution,
-                bold: true,
-              }),
-            ],
-          }),
-          new Paragraph({
-            text: `${edu.startDate} - ${edu.endDate}`,
-            style: "italic",
-          }),
-        ]).flat(),
-        new Paragraph({
-          text: "Skills",
-          heading: HeadingLevel.HEADING_2,
-        }),
-        new Paragraph({
-          text: formData.skills.join(", "),
-        }),
-      ],
-    }],
+      children
+    }]
   });
-
-  return doc;
 };
 
-export const exportResume = async (formData: FormData): Promise<Blob> => {
-  const doc = createDocxDocument(formData);
-  const blob = await Packer.toBlob(doc);
-  return blob;
+/**
+ * Exports resume as a file
+ */
+export const exportResume = async (formData: FormData, fileFormat: FileFormat = 'docx', resumeContent?: string): Promise<Blob> => {
+  try {
+    // If no content provided, generate from template
+    const content = resumeContent || createHarvardResumeTemplate(formData);
+    
+    // Create docx document from markdown content
+    const doc = createDocxFromMarkdown(content);
+    
+    // Convert to blob
+    const blob = await Packer.toBlob(doc);
+    return blob;
+  } catch (error) {
+    console.error('Error exporting resume:', error);
+    throw new Error('Failed to export resume');
+  }
 };
-
 
 /**
  * Gets appropriate color for ATS score display
- * @param score - Numeric score (0-100)
- * @returns CSS color class
  */
 export const getScoreColor = (score: number): string => {
   if (score >= 80) return 'text-green-500';
@@ -383,8 +390,6 @@ export const getScoreColor = (score: number): string => {
 
 /**
  * Checks if form data is complete enough to generate a resume
- * @param data - The form data to check
- * @returns Boolean indicating if minimum required fields are filled
  */
 export const isFormDataComplete = (data: FormData): boolean => {
   const { personalInfo, experience, education, skills } = data;
@@ -410,9 +415,6 @@ export const isFormDataComplete = (data: FormData): boolean => {
 
 /**
  * Formats date range for display
- * @param startDate - Start date string
- * @param endDate - End date string (or 'Present')
- * @returns Formatted date range string
  */
 export const formatDateRange = (startDate: string, endDate: string | 'Present'): string => {
   return `${startDate} - ${endDate}`;
