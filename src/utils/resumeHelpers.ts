@@ -7,7 +7,7 @@
 import { v4 as uuidv4 } from 'uuid';
 import { FormData, AtsAnalysisResult, FileFormat } from '../types';
 import mammoth from 'mammoth';
-import { Document, Paragraph, TextRun, HeadingLevel, Table, TableRow, TableCell, WidthType, Packer } from 'docx';
+import { Document, Paragraph, TextRun, HeadingLevel, Table, TableRow, TableCell, WidthType, Packer, BorderStyle } from 'docx';
 
 /**
  * Parses resume content from an uploaded file
@@ -19,9 +19,10 @@ export const parseResumeFromFile = async (file: File): Promise<string> => {
     reader.onload = async () => {
       try {
         const arrayBuffer = reader.result as ArrayBuffer;
+        // Remove invalid properties from mammoth options
         const result = await mammoth.extractRawText({ 
           arrayBuffer,
-          includeDefaultStyleMap: true,
+          // Remove the includeDefaultStyleMap property as it's not in the type definition
           preserveEmpty: true
         });
         
@@ -52,6 +53,7 @@ export const parseResumeFromFile = async (file: File): Promise<string> => {
 export const extractDataFromText = (text: string): Partial<FormData> => {
   // Enhanced text parsing logic
   const sections = text.split('\n\n');
+  // Initialize with only the properties defined in the FormData interface
   const data: Partial<FormData> = {
     personalInfo: { firstName: '', lastName: '', email: '', phone: '', location: '' },
     experience: [],
@@ -115,8 +117,8 @@ export const createEmptyFormData = (): FormData => ({
   summary: '',
   experience: [],
   education: [],
-  skills: [],
-  achievements: []
+  skills: []
+  // Remove achievements as it's not in the FormData interface
 });
 
 /**
@@ -287,7 +289,14 @@ export const createDocxFromMarkdown = (markdownContent: string): Document => {
           text: line.substring(3),
           heading: HeadingLevel.HEADING_2,
           spacing: { before: 400, after: 200 },
-          border: { bottom: { color: "#000000", size: 10, space: 1 } }
+          border: { 
+            bottom: { 
+              color: "#000000", 
+              size: 10, 
+              space: 1,
+              style: BorderStyle.SINGLE // Add the required style property
+            } 
+          }
         })
       );
     } else if (line.startsWith('### ')) {
