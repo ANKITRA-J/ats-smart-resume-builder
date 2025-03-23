@@ -7,7 +7,7 @@ import { createHarvardResumeTemplate } from '@/utils/resumeHelpers';
 const API_KEY_STORAGE_KEY = 'cohere_api_key_encrypted';
 
 // Your API key (obfuscated with a simple encoding)
-const ENCODED_API_KEY = "UmVwbGFjZVRoaXNXaXRoWW91ckFjdHVhbEFwaUtleUVuY29kZWRJbkJhc2U2NA=="; // Replace with your base64 encoded API key
+const ENCODED_API_KEY = "j7J7nPQUxOaCKHq7izOkPFjeUWlWi1tuOfVTM3IT"; // Replace with your base64 encoded API key
 
 // Function to encrypt the API key (basic obfuscation)
 const encryptKey = (key: string): string => {
