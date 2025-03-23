@@ -3,74 +3,11 @@
 import { AtsAnalysisResult, FormData } from '@/types';
 import { createHarvardResumeTemplate } from '@/utils/resumeHelpers';
 
-// Secure API key handling
-const API_KEY_STORAGE_KEY = 'cohere_api_key_encrypted';
-
-// Function to encrypt the API key (basic obfuscation)
-const encryptKey = (key: string): string => {
-  return btoa(key); // Basic encoding, not true encryption
-};
-
-// Function to decrypt the API key
-const decryptKey = (encryptedKey: string): string => {
-  try {
-    return atob(encryptedKey);
-  } catch (error) {
-    return '';
-  }
-};
-
-// Function to get the API key securely
-const getApiKey = (): string => {
-  const encryptedKey = localStorage.getItem(API_KEY_STORAGE_KEY);
-  if (encryptedKey) {
-    return decryptKey(encryptedKey);
-  }
-  return "";
-};
-
-// Function to save the API key securely
-const saveApiKey = (key: string): void => {
-  if (key) {
-    const encryptedKey = encryptKey(key);
-    localStorage.setItem(API_KEY_STORAGE_KEY, encryptedKey);
-  }
-};
-
-// Function to ensure we have an API key
-const ensureApiKey = (): string => {
-  let key = getApiKey();
-  
-  // If no key is found, prompt user to enter one
-  if (!key) {
-    key = prompt("Please enter your Cohere API key to continue. This will be stored locally and not shared.");
-    if (key) {
-      saveApiKey(key);
-    }
-  }
-  
-  return key;
-};
-
-// Allow users to manually clear their API key if needed
-export const clearApiKey = (): void => {
-  localStorage.removeItem(API_KEY_STORAGE_KEY);
-};
-
-// Check if an API key exists
-export const hasApiKey = (): boolean => {
-  return !!getApiKey();
-};
+const COHERE_API_KEY = "j7J7nPQUxOaCKHq7izOkPFjeUWlWi1tuOfVTM3IT";
 
 export const analyzeResume = async (resumeText: string, jobDescription: string): Promise<AtsAnalysisResult> => {
   try {
     console.log("Analyzing resume with Cohere AI...");
-    
-    // Get API key securely
-    const apiKey = ensureApiKey();
-    if (!apiKey) {
-      throw new Error('API key is required to analyze the resume');
-    }
 
     const prompt = `
 You are an expert ATS (Applicant Tracking System) analyzer and HR professional with extensive experience in resume optimization.
@@ -138,7 +75,7 @@ Return your analysis as a JSON object with this structure:
     const response = await fetch("https://api.cohere.ai/v1/generate", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${apiKey}`,
+        Authorization: `Bearer ${COHERE_API_KEY}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
@@ -204,12 +141,6 @@ export const generateImprovedResume = async (formData: FormData, jobDescription:
     if (!formData || !formData.personalInfo) {
       throw new Error("Invalid resume data");
     }
-    
-    // Get API key securely
-    const apiKey = ensureApiKey();
-    if (!apiKey) {
-      throw new Error('API key is required to generate the improved resume');
-    }
 
     const prompt = `
 Create a professional ATS-optimized resume using this data:
@@ -252,7 +183,7 @@ Ensure all content is professional and ATS-friendly.`;
     const response = await fetch("https://api.cohere.ai/v1/generate", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${apiKey}`,
+        Authorization: `Bearer ${COHERE_API_KEY}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
