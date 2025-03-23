@@ -1,3 +1,4 @@
+
 /**
  * Resume Processing Utilities
  * This file contains helper functions for processing resume data
@@ -19,7 +20,7 @@ export const parseResumeFromFile = async (file: File): Promise<string> => {
       try {
         const arrayBuffer = reader.result as ArrayBuffer;
         const result = await mammoth.extractRawText({ 
-          arrayBuffer
+          arrayBuffer 
         });
         
         if (!result.value) {
@@ -114,7 +115,6 @@ export const createEmptyFormData = (): FormData => ({
   experience: [],
   education: [],
   skills: []
-  // No achievements property as it's not in the FormData interface
 });
 
 /**
