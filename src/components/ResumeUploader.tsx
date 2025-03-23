@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useToast } from '@/components/ui/use-toast';
@@ -15,6 +15,7 @@ const ResumeUploader: React.FC<ResumeUploaderProps> = ({ onResumeExtracted }) =>
   const [isUploading, setIsUploading] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const { toast } = useToast();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -64,6 +65,12 @@ const ResumeUploader: React.FC<ResumeUploaderProps> = ({ onResumeExtracted }) =>
     
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
       validateAndSetFile(e.dataTransfer.files[0]);
+    }
+  };
+
+  const handleBrowseClick = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
     }
   };
 
@@ -127,18 +134,17 @@ const ResumeUploader: React.FC<ResumeUploaderProps> = ({ onResumeExtracted }) =>
               </p>
               
               <div className="flex flex-col sm:flex-row gap-4">
-                <div className="relative">
-                  <input
-                    type="file"
-                    accept=".docx"
-                    onChange={handleFileChange}
-                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                  />
-                  <Button variant="outline" className="relative">
-                    <FileIcon className="mr-2 h-4 w-4" />
-                    Browse Files
-                  </Button>
-                </div>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".docx"
+                  onChange={handleFileChange}
+                  className="hidden"
+                />
+                <Button variant="outline" onClick={handleBrowseClick}>
+                  <FileIcon className="mr-2 h-4 w-4" />
+                  Browse Files
+                </Button>
                 
                 <Button 
                   onClick={handleUpload} 
