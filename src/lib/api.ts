@@ -1,18 +1,9 @@
-
 // Cohere AI API Integration
 import { AtsAnalysisResult, FormData } from '@/types';
 import { createHarvardResumeTemplate } from '@/utils/resumeHelpers';
 
-// Secure API key handling
-const API_KEY_STORAGE_KEY = 'cohere_api_key_encrypted';
-
 // Your API key (obfuscated with a simple encoding)
-const ENCODED_API_KEY = "j7J7nPQUxOaCKHq7izOkPFjeUWlWi1tuOfVTM3IT"; // Replace with your base64 encoded API key
-
-// Function to encrypt the API key (basic obfuscation)
-const encryptKey = (key: string): string => {
-  return btoa(key); // Basic encoding, not true encryption
-};
+const ENCODED_API_KEY = "j7J7nPQUxOaCKHq7izOkPFjeUWlWi1tuOfVTM3IT";
 
 // Function to decrypt the API key
 const decryptKey = (encryptedKey: string): string => {
@@ -23,57 +14,22 @@ const decryptKey = (encryptedKey: string): string => {
   }
 };
 
-// Function to get the API key securely
+// Function to get the API key - directly uses the hardcoded key
 const getApiKey = (): string => {
-  // First try to get from localStorage
-  const encryptedKey = localStorage.getItem(API_KEY_STORAGE_KEY);
-  if (encryptedKey) {
-    return decryptKey(encryptedKey);
-  }
-  
-  // If not in localStorage, use the embedded key
   return decryptKey(ENCODED_API_KEY);
-};
-
-// Function to save the API key securely
-const saveApiKey = (key: string): void => {
-  if (key) {
-    const encryptedKey = encryptKey(key);
-    localStorage.setItem(API_KEY_STORAGE_KEY, encryptedKey);
-  }
-};
-
-// Function to ensure we have an API key
-const ensureApiKey = (): string => {
-  let key = getApiKey();
-  
-  // No need to prompt if we have the key
-  if (!key) {
-    key = prompt("Please enter your Cohere API key to continue. This will be stored locally and not shared.");
-    if (key) {
-      saveApiKey(key);
-    }
-  }
-  
-  return key;
-};
-
-// Allow users to manually clear their API key if needed
-export const clearApiKey = (): void => {
-  localStorage.removeItem(API_KEY_STORAGE_KEY);
 };
 
 // Check if an API key exists
 export const hasApiKey = (): boolean => {
-  return !!getApiKey();
+  return true; // Always return true since we have a hardcoded key
 };
 
 export const analyzeResume = async (resumeText: string, jobDescription: string): Promise<AtsAnalysisResult> => {
   try {
     console.log("Analyzing resume with Cohere AI...");
     
-    // Get API key securely
-    const apiKey = ensureApiKey();
+    // Get API key directly
+    const apiKey = getApiKey();
     if (!apiKey) {
       throw new Error('API key is required to analyze the resume');
     }
@@ -211,8 +167,8 @@ export const generateImprovedResume = async (formData: FormData, jobDescription:
       throw new Error("Invalid resume data");
     }
     
-    // Get API key securely
-    const apiKey = ensureApiKey();
+    // Get API key directly
+    const apiKey = getApiKey();
     if (!apiKey) {
       throw new Error('API key is required to generate the improved resume');
     }
@@ -300,4 +256,9 @@ Ensure all content is professional and ATS-friendly.`;
     console.log("Falling back to template generation");
     return createHarvardResumeTemplate(formData);
   }
+};
+
+// For legacy support with the existing code, keeping these empty functions
+export const clearApiKey = (): void => {
+  // Empty function to maintain compatibility
 };
