@@ -2,22 +2,8 @@
 import { AtsAnalysisResult, FormData } from '@/types';
 import { createHarvardResumeTemplate } from '@/utils/resumeHelpers';
 
-// Your API key (obfuscated with a simple encoding)
-const ENCODED_API_KEY = "j7J7nPQUxOaCKHq7izOkPFjeUWlWi1tuOfVTM3IT";
-
-// Function to decrypt the API key
-const decryptKey = (encryptedKey: string): string => {
-  try {
-    return atob(encryptedKey);
-  } catch (error) {
-    return '';
-  }
-};
-
-// Function to get the API key - directly uses the hardcoded key
-const getApiKey = (): string => {
-  return decryptKey(ENCODED_API_KEY);
-};
+// Your API key (directly used)
+const API_KEY = "j7J7nPQUxOaCKHq7izOkPFjeUWlWi1tuOfVTM3IT";
 
 // Check if an API key exists
 export const hasApiKey = (): boolean => {
@@ -28,9 +14,7 @@ export const analyzeResume = async (resumeText: string, jobDescription: string):
   try {
     console.log("Analyzing resume with Cohere AI...");
     
-    // Get API key directly
-    const apiKey = getApiKey();
-    if (!apiKey) {
+    if (!API_KEY) {
       throw new Error('API key is required to analyze the resume');
     }
 
@@ -100,7 +84,7 @@ Return your analysis as a JSON object with this structure:
     const response = await fetch("https://api.cohere.ai/v1/generate", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${apiKey}`,
+        Authorization: `Bearer ${API_KEY}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
@@ -167,9 +151,7 @@ export const generateImprovedResume = async (formData: FormData, jobDescription:
       throw new Error("Invalid resume data");
     }
     
-    // Get API key directly
-    const apiKey = getApiKey();
-    if (!apiKey) {
+    if (!API_KEY) {
       throw new Error('API key is required to generate the improved resume');
     }
 
@@ -214,7 +196,7 @@ Ensure all content is professional and ATS-friendly.`;
     const response = await fetch("https://api.cohere.ai/v1/generate", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${apiKey}`,
+        Authorization: `Bearer ${API_KEY}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
