@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import Header from '@/components/Header';
 import ResumeUploader from '@/components/ResumeUploader';
@@ -7,7 +6,7 @@ import AtsAnalysis from '@/components/AtsAnalysis';
 import ResumePreview from '@/components/ResumePreview';
 import { FormData } from '@/types';
 import { createEmptyFormData, extractDataFromText } from '@/utils/resumeHelpers';
-import { Github, Heart } from 'lucide-react';
+import { Github } from 'lucide-react';
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState<'upload' | 'create' | 'analyze' | 'preview'>('upload');
@@ -18,14 +17,12 @@ const Index = () => {
   const handleResumeExtracted = (text: string) => {
     setResumeText(text);
     
-    // Extract structured data from resume text
     const extractedData = extractDataFromText(text);
     setFormData({
       ...formData,
       ...extractedData
     });
     
-    // Move to the analyze tab
     setActiveTab('analyze');
   };
 
@@ -78,9 +75,7 @@ const Index = () => {
       
       <footer className="bg-muted/40 backdrop-blur-sm border-t py-4 text-center text-sm text-muted-foreground fixed bottom-0 w-full">
         <div className="container mx-auto flex items-center justify-center space-x-2">
-          <span>Made with</span>
-          <Heart className="h-4 w-4 text-red-500 animate-pulse" />
-          <span>by Lakshay</span>
+          <span>Created by Lakshay</span>
           <a 
             href="https://github.com/isthatlak" 
             target="_blank" 
